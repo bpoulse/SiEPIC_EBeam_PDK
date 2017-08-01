@@ -317,7 +317,7 @@ def find_automated_measurement_labels(topcell, LayerTextN):
   # LayerText = pya.LayerInfo(10, 0)
   # LayerTextN = topcell.layout().layer(LayerText)
   # find_automated_measurement_labels(topcell, LayerTextN)
-  t = '% X-coord, Y-coord, Polarization, wavelength, type, deviceID, comment &lt;br&gt;'
+  t = ''
   dbu = topcell.layout().dbu
   iter = topcell.begin_shapes_rec(LayerTextN)
   i=0
@@ -327,13 +327,7 @@ def find_automated_measurement_labels(topcell, LayerTextN):
       if text.string.find("opt_in") &gt; -1:
         i+=1
         text2 = iter.shape().text.transformed(iter.itrans())
-#        t += "label: %s, location: (%s, %s) &lt;br&gt;" %(text.string, text2.x*dbu, text2.y*dbu )
-        fields = text.string.split("_")
-        fields.append('comment')
-        fields = fields[:7]
-        while len(fields) &lt; 7:
-          fields.append('')
-        t += "%s,%s,%s,%s,%s,%s,%s&lt;br&gt;" %(int(text2.x*dbu), int(text2.y*dbu), fields[2], fields[3],fields[4],fields[5],fields[6] )
+        t += "label: %s, location: (%s, %s) &lt;br&gt;" %(text.string, text2.x*dbu, text2.y*dbu )
     iter.next()
   t += "&lt;br&gt;*** Number of automated measurement labels: %s.&lt;br&gt;" % i
   return t
@@ -355,7 +349,6 @@ def find_all_components(cell, LayerDevRecN, LayerPinRecN, LayerFbrTgtN):
   
   # Use the pin names on layer PinRec to sort the pins in alphabetical order
   #   Requires that a text label be in PinRec layer, co-linear inside the PinRec path.
-
 
   # Find all the DevRec shapes
   iter1 = cell.begin_shapes_rec(LayerDevRecN)
@@ -536,14 +529,10 @@ def angle_vectors(pt1, pt2):
   return (rads2-rads1)/math.pi*180
 
 def angle_segments(segA, segB):
-  if len(segA) == 2 &amp; len(segB) == 2:
-    ptA1, ptA2 = segA
-    ptB1, ptB2 = segB
-    return angle_vectors([ptA2[0]-ptA1[0], ptA2[1]-ptA1[1]], [ptB2[0]-ptB1[0], ptB2[1]-ptB1[1]])
-  else:
-    print("Error: need exactly 2 vertices per segment")
-    return -1
-    
+  ptA1, ptA2 = segA
+  ptB1, ptB2 = segB
+  return angle_vectors([ptA2[0]-ptA1[0], ptA2[1]-ptA1[1]], [ptB2[0]-ptB1[0], ptB2[1]-ptB1[1]])
+
 def av_angle_segments(segA, segB):
   ptA1, ptA2 = segA
   ptB1, ptB2 = segB
@@ -1302,7 +1291,6 @@ def generate_Spice_file(topcell, optical_waveguides, optical_components, optical
 
 
 def generate_short_spice_files(topcell, optical_waveguides, optical_components, optical_pins):
-  
   # create a list of all the waveguides and components
   temp_list = optical_waveguides + optical_components
 
@@ -1418,6 +1406,7 @@ def generate_short_spice_files(topcell, optical_waveguides, optical_components, 
     
     #make detector or laser string as a parent_node of the extracted gcs which will be used as a reference
     #to identify connected GCs
+    
     for items in lumerical_list:
       x_ = []
       y_ = []
@@ -1488,24 +1477,14 @@ def generate_short_spice_files(topcell, optical_waveguides, optical_components, 
     #make a list of groups
     temp_group_list = [list(each) for each in grouped_items]
     
-    
-    print(len(temp_group_list))
     final_group_list=[]
     #remove the groups with no detectors/lasers and store them in final_group_list
-    #selects the ones with only detector and no laser connection which is bad
-    """
     for each in temp_group_list:
         if(any(x.parent_node == "DETECTOR" or x.parent_node == "LASER" for x in each) == True):
           temp = [i.current_node for i in each]
           final_group_list = final_group_list + temp
-   """
-   
-    for each in temp_group_list:
-        if(any(x.parent_node == "LASER" for x in each) == True):
-          if(any(y.parent_node == "DETECTOR" for y in each) == True):
-            temp = [i.current_node for i in each]
-            final_group_list = final_group_list + temp   
-
+    
+    
     #get separate lists of fetched optical_waveguides and optical_components
     optical_waveguideF = []
     optical_componentF = []
@@ -1533,7 +1512,7 @@ def generate_short_spice_files(topcell, optical_waveguides, optical_components, 
          
     optical_pins = []
     optical_pins = optical_pinsF
-
+    
     
     # Output the Spice netlist:
     return generate_Spice_file(topcell, optical_waveguideF, optical_componentF, optical_pins)
@@ -1992,5 +1971,48 @@ def check_pdk_directory():
       #show warning message
       pya.MessageBox.warning("Incorrect File Directory", "PDK installed in the Global folder.\nIt should be installed in the KLayout Configuration folder: \n"+ r"C:\Users\%s\KLayout\pymacros"%(username), pya.MessageBox.Ok)
 
-  </text>
+def transform_to_offset(path, offset):
+  from math import pi, cos, sin, acos, sqrt
+  def angle_trunc(a):
+    while a &lt; 0.0:
+      a += pi * 2
+    return a
+
+  def angle(vec):
+    return angle_trunc(atan2(vec[1],vec[0]))
+
+  trans_path = [row[:] for row in path]
+  
+  for i in range(0, len(path)):
+    if i == 0:
+      u = [-(path[i+1][0]-path[i][0]), -(path[i+1][1]-path[i][1])]
+      v = [path[i+1][0]-path[i][0], path[i+1][1]-path[i][1]]
+    elif i == (len(path) - 1):
+      u = [path[i-1][0]-path[i][0], path[i-1][1]-path[i][1]]
+      v = [-(path[i-1][0]-path[i][0]), -(path[i-1][1]-path[i][1])]
+    else:
+      u = [path[i-1][0]-path[i][0], path[i-1][1]-path[i][1]]
+      v = [path[i+1][0]-path[i][0], path[i+1][1]-path[i][1]]
+
+    if offset &lt; 0:
+      o1 = [abs(offset)*cos(angle(u)-pi/2), abs(offset)*sin(angle(u)-pi/2)]
+      o2 = [abs(offset)*cos(angle(v)+pi/2), abs(offset)*sin(angle(v)+pi/2)]
+    else:
+      o1 = [abs(offset)*cos(angle(u)+pi/2), abs(offset)*sin(angle(u)+pi/2)]
+      o2 = [abs(offset)*cos(angle(v)-pi/2), abs(offset)*sin(angle(v)-pi/2)]
+    
+    p1 = [u[0]+o1[0], u[1]+o1[1]]
+    p2 = [o1[0], o1[1]]
+    p3 = [v[0]+o2[0], v[1]+o2[1]]
+    p4 = [o2[0], o2[1]]
+    
+    d = (p1[0]-p2[0])*(p3[1]-p4[1])-(p1[1]-p2[1])*(p3[0]-p4[0])
+    if round(d,10) == 0:
+      trans_path[i][0] = trans_path[i][0] + p2[0]
+      trans_path[i][1] = trans_path[i][1] + p2[1]
+    else:
+      trans_path[i][0] = trans_path[i][0] + ((p1[0]*p2[1]-p1[1]*p2[0])*(p3[0]-p4[0])-(p1[0]-p2[0])*(p3[0]*p4[1]-p3[1]*p4[0]))/d
+      trans_path[i][1] = trans_path[i][1] + ((p1[0]*p2[1]-p1[1]*p2[0])*(p3[1]-p4[1])-(p1[1]-p2[1])*(p3[0]*p4[1]-p3[1]*p4[0]))/d
+    
+  return trans_path</text>
 </klayout-macro>

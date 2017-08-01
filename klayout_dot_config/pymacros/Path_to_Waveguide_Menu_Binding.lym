@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Path to Waveguide</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut>W</shortcut>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.waveguides_submenu.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import pya
+
+if 'wgb' not in globals():
+  wgb = WaveguideBuilder()
+  
+# initialize the arrays to keep track of layout objects
+optical_components = []
+optical_waveguides = []
+optical_pins = []
+optical_nets = []
+reset_Optical_classes()
+
+wgb.show()</text>
+</klayout-macro>

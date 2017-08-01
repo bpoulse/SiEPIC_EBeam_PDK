@@ -106,7 +106,7 @@ if object_selection == []:
   # find all instances, specifically, Waveguides:
   for inst in topcell.each_inst():
     print("Cell: %s" % (inst.cell.basic_name() ) )
-    if inst.cell.basic_name() in Waveguide_Types:
+    if inst.cell.basic_name().split('$')[0] == "Waveguide_Route_General":
       n = len(object_selection)
       object_selection.append( pya.ObjectInstPath() )
       object_selection[n].top = topcell.cell_index()
@@ -120,37 +120,24 @@ for o in object_selection:
   if o.is_cell_inst():
     print("Selected object is a cell.")
     oinst = o.inst()
-    if oinst.is_pcell():
-      c = oinst.cell
-      if c.basic_name() in Waveguide_Types and c.pcell_parameters_by_name()['layer'] == LayerSi:
-        print("%s on LayerSi." % c.basic_name() )
-        is_waveguide = True
-        trans = oinst.trans
-
-  elif o.shape:
-    print("Selected object is a shape.")
-    c = o.shape.cell
-    if c.basic_name() in Waveguide_Types and c.is_pcell_variant() and c.pcell_parameters_by_name()['layer'] == LayerSi:
-      # we have a waveguide GUIDING_LAYER selected
-      print("Selected object is a GUIDING_LAYER in %s on LayerSi." % c.basic_name() )
-      trans = o.source_trans().s_trans()
-      o_instpathlen = o.path_length()
-      oinst = o.path_nth(o_instpathlen-1).inst()
+    c = oinst.cell
+    if c.basic_name().split('$')[0] == "Waveguide_Route_General":
       is_waveguide = True
+      trans = oinst.trans
 
   # We now have a waveguide ROUND_PATH PCell, with variables: o (ObjectInstPath), oinst (Instance), c (Cell)
   if is_waveguide == True:
-    path_obj = c.pcell_parameters_by_name()['path']
+    path_obj = c.property('path')
     print( path_obj ) 
-    wg_width = path_obj.width/dbu
+    wg_width = path_obj.width
     # convert wg_path (in microns) to database numbers
-    wg_path = points_to_path(points_mult(path_to_Dpoints(path_obj), 1/dbu), wg_width)
+    wg_path = points_to_path(path_to_Dpoints(path_obj), wg_width)
     # get waveguide transformation
     wg_path_trans = wg_path.transformed(trans)
 
     print( "wg_path_trans: %s" % wg_path_trans ) 
     new_wg = topcell.shapes(LayerSiN).insert(wg_path_trans)
-
+    c.delete_property('path')
     # Leave the newly created path selected, to make it obvious to the user.
     # http://klayout.de/forum/comments.php?DiscussionID=747
     new_selectionN = len(new_selection)
@@ -160,8 +147,8 @@ for o in object_selection:
     new_selection[new_selectionN].top = o.top
     new_selection[new_selectionN].cv_index = o.cv_index
    
-#    to_delete.append(oinst.cell) # deleting this removes the cell entirely (which may be used elsewhere!)
-    to_delete.append(oinst) # ldelete the instance; leaves behind the cell if it's not used
+    to_delete.append(oinst.cell) # deleting this removes the cell entirely (which may be used elsewhere!)
+    #to_delete.append(oinst) # ldelete the instance; leaves behind the cell if it's not used
         
 for t in to_delete:
   t.delete()
