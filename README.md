@@ -1,8 +1,8 @@
 TODO:
-Interconnect binding
-Bezier curve implementation
-Add compact model support
-Add saving and serialzing configurations
+- Interconnect binding
+- Bezier curve implementation
+- Add compact model support
+- Add saving and serialzing configurations
 
 # SiEPIC_EBeam_PDK
 
