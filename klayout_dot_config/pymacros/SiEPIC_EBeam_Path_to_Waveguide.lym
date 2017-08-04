@@ -584,10 +584,10 @@ def createStraightWaveguide(wg_length, wg_width):
 def createBentWaveguide(width, radius, adiab, bezier):
   from math import pi, cos, sin, sqrt
   if adiab:
-    N=500
+    N=100
 
     L = radius  # effective bend radius / Length of the bend
-    diff = 1/N
+    diff = 1/(N-1)
     xp=[0, (1-bezier)*L, L, L]
     yp=[0, 0, bezier*L, L]
     xA = xp[3] - 3*xp[2] + 3*xp[1] - xp[0]
@@ -599,30 +599,26 @@ def createBentWaveguide(width, radius, adiab, bezier):
     yC = 3*yp[1] - 3*yp[0]
     yD = yp[0]
     
-    orig = Point(0,L)
     coord = [Point(xD, yD)]
-    pts = []
+    outer = []
+    inner = []
     for i in range(1, N):
       t = i*diff
       coord.append(Point(t**3*xA + t**2*xB + t*xC + xD, t**3*yA + t**2*yB + t*yC + yD))
-    
-    pts.append(Point(0, -L-width/2))
-    for i in range(1, N):
-      vec = Point(coord[i].x - orig.x, coord[i].y - orig.y)
-      vec = vec*((vec.abs()+width/2)/vec.abs())
-      pts.append(vec)
-    pts.append(Point(L+width/2, 0))
-    pts.append(Point(L-width/2, 0))
-    for i in range(N-1, 0, -1):
-      vec = Point(coord[i].x - orig.x, coord[i].y - orig.y)
-      vec = vec*((vec.abs()-width/2)/vec.abs())
-      pts.append(vec)
-    pts.append(Point(0,-L+width/2))
+      
+    outer.append(Point(0, width/2))
+    inner.append(Point(0, -width/2))
+    for i in range(1, N-1):
+      dpt = (coord[i+1]-coord[i-1])*(2/diff)
+      norm = Point(-dpt.y, dpt.x)*(width/2/dpt.abs())
+      outer.append(Point(coord[i].x + norm.x, coord[i].y + norm.y))
+      inner.append(Point(coord[i].x - norm.x, coord[i].y - norm.y))
+    outer.append(Point(L-width/2, L))
+    inner.append(Point(L+width/2, L))
 
+    pts = outer + inner[::-1}
     for i in range(0, len(pts)):
-      pts[i] += Point(-L, L)
-    
-    return Polygon(pts)
+      pts[i] += Point(-L, 0)
     
   else:
   
@@ -642,6 +638,6 @@ def createBentWaveguide(width, radius, adiab, bezier):
     for i in range(npoints, -1, -1):
       pts.append(Point.from_dpoint(pya.DPoint((x+(radius-width/2)*cos(i*da+th))/1, (y+(radius-width/2)*sin(i*da+th))/1)))
       
-    return Polygon(pts)
+  return Polygon(pts)
     </text>
 </klayout-macro>
