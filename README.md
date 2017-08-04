@@ -1,6 +1,5 @@
 TODO:
 - Interconnect binding
-- Bezier curve implementation
 - Add compact model support
 - Add saving and serialzing configurations
 
