@@ -1,3 +1,9 @@
+TODO:
+- Interconnect binding
+- Bezier curve implementation
+- Add compact model support
+- Add saving and serialzing configurations
+
 # SiEPIC_EBeam_PDK
 
 - <a href="www.siepic.ubc.ca">SiEPIC</a> EBeam PDK, Library - for silicon photonics layout, design, verification and circuit simulation
