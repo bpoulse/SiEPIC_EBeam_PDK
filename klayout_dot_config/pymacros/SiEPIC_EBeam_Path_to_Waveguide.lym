@@ -210,7 +210,7 @@ def pathToWaveguide(val):
   waveguideInfo = []
   t_width = 0
   if wgb.window.findChild('radioStrip').isChecked():
-    waveguideInfo.append([wgb.window.findChild('stripLayer').currentText, float(wgb.window.findChild('slabWidth').text)/dbu, 0])
+    waveguideInfo.append([wgb.window.findChild('stripLayer').currentText, float(wgb.window.findChild('stripWidth').text)/dbu, 0])
     t_width = waveguideInfo[0][1]
   elif wgb.window.findChild('radioRidge').isChecked():
     waveguideInfo.append([wgb.window.findChild('ridgeLayer1').currentText, float(wgb.window.findChild('ridgeWidth1').text)/dbu, 0])
@@ -463,10 +463,10 @@ def pathToWaveguide(val):
           for info in waveguideInfo:
             trans_path = transform_to_offset(path_to_points(path_obj), info[2])
             wg_path = points_to_Dpath(trans_path, info[1])
-            params.append([radius-info[2], wg_path, pya.LayerInfo(int(info[0].split(' ')[-1].split('/')[0]), int(info[0].split(' ')[-1].split('/')[1])), adiabatic])
+            params.append([radius-info[2], wg_path, pya.LayerInfo(int(info[0].split(' ')[-1].split('/')[0]), int(info[0].split(' ')[-1].split('/')[1]))])
 
-          createWaveguide(ly, wcell, params, t_width)
-          createWaveguide(ly, wcell, [[radius, points_to_Dpath(path_to_points(path_obj), 3*t_width), LayerDevRec, adiabatic]], 3*t_width)
+          createWaveguide(ly, wcell, params, t_width, adiabatic, bezier)
+          createWaveguide(ly, wcell, [[radius, points_to_Dpath(path_to_points(path_obj), 3*t_width), LayerDevRec]], 3*t_width, adiabatic, bezier)
           points = path_to_points(path_obj)
           
           # Pins on the waveguide:
@@ -513,7 +513,7 @@ def pathToWaveguide(val):
     # Record a transaction, to enable "undo"
     lv.commit()
     
-def createWaveguide(ly, cell, params, t_width):
+def createWaveguide(ly, cell, params, t_width, adiabatic, bezier):
 
   from math import sqrt, pi, cos, sin
   dbu = ly.dbu
@@ -521,7 +521,7 @@ def createWaveguide(ly, cell, params, t_width):
 
   added = False
   for param in params:
-    radius, path, layer, adiab = param
+    radius, path, layer = param
     
     points = path_to_Dpoints(path)  # convert from microns to dbu
     
@@ -555,7 +555,7 @@ def createWaveguide(ly, cell, params, t_width):
       if (seg_len / 2 &lt; radius) and i&lt;len(points)-2:
         radius = seg_len / 2
       trans = Trans(angle, True if rightvsleft_turn&lt;0 else False, Point(*points[i]))
-      poly = createBentWaveguide(wg_width, radius, adiab)
+      poly = createBentWaveguide(wg_width, radius, adiabatic, bezier)
       cell.shapes(ly.layer(layer)).insert(poly.transform(trans))
 
     # Place the straight waveguide segments:
@@ -581,39 +581,67 @@ def createWaveguide(ly, cell, params, t_width):
 def createStraightWaveguide(wg_length, wg_width):
   return points_to_path([[-wg_length/2,0], [wg_length/2, 0]],wg_width).simple_polygon()
 
-def createBentWaveguide(width, radius, adiab):
-    if adiab:
-      return wg_arc(-radius, radius, radius, width, 270, 360)
-    else:
-      return wg_arc(-radius, radius, radius, width, 270, 360)
+def createBentWaveguide(width, radius, adiab, bezier):
+  from math import pi, cos, sin, sqrt
+  if adiab:
+    N=500
+
+    L = radius  # effective bend radius / Length of the bend
+    diff = 1/N
+    xp=[0, (1-bezier)*L, L, L]
+    yp=[0, 0, bezier*L, L]
+    xA = xp[3] - 3*xp[2] + 3*xp[1] - xp[0]
+    xB = 3*xp[2] - 6*xp[1] + 3*xp[0]
+    xC = 3*xp[1] - 3*xp[0]
+    xD = xp[0]
+    yA = yp[3] - 3*yp[2] + 3*yp[1] - yp[0]
+    yB = 3*yp[2] - 6*yp[1] + 3*yp[0]
+    yC = 3*yp[1] - 3*yp[0]
+    yD = yp[0]
     
-def wg_arc(x, y, r, w, theta_start, theta_stop):
-  # function to draw an arc of waveguide
-  # cell: layout cell to place the layout
-  # LayerSiN: which layer to use
-  # x, y: location of the origin
-  # r: radius
-  # w: waveguide width
-  # length units in dbu
-  # theta_start, theta_stop: angles for the arc
-  # angles in degrees
+    orig = Point(0,L)
+    coord = [Point(xD, yD)]
+    pts = []
+    for i in range(1, N):
+      t = i*diff
+      coord.append(Point(t**3*xA + t**2*xB + t*xC + xD, t**3*yA + t**2*yB + t*yC + yD))
+    
+    pts.append(Point(0, -L-width/2))
+    for i in range(1, N):
+      vec = Point(coord[i].x - orig.x, coord[i].y - orig.y)
+      vec = vec*((vec.abs()+width/2)/vec.abs())
+      pts.append(vec)
+    pts.append(Point(L+width/2, 0))
+    pts.append(Point(L-width/2, 0))
+    for i in range(N-1, 0, -1):
+      vec = Point(coord[i].x - orig.x, coord[i].y - orig.y)
+      vec = vec*((vec.abs()-width/2)/vec.abs())
+      pts.append(vec)
+    pts.append(Point(0,-L+width/2))
 
-  # example usage.  Places the ring layout in the presently selected cell.
-  # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-  # layout_Ring(cell, cell.layout().layer(LayerInfo(1, 0)), 0, 0, 10*1000, 0.5*1000, 0, 360)
-
-  from math import pi, cos, sin
+    for i in range(0, len(pts)):
+      pts[i] += Point(-L, L)
+    
+    return Polygon(pts)
+    
+  else:
   
-  circle_fraction = abs(theta_stop-theta_start) / 360.0
-  npoints = int(points_per_circle(r*dbu) * circle_fraction)
-  if npoints==0:
-    npoints = 1
-  da = 2 * pi / npoints * circle_fraction # increment, in radians
-  pts = []
-  th = theta_start / 360.0 * 2 * pi
-  for i in range(0, npoints+1):
-    pts.append(Point.from_dpoint(pya.DPoint((x+(r+w/2)*cos(i*da+th))/1, (y+(r+w/2)*sin(i*da+th))/1)))
-  for i in range(npoints, -1, -1):
-    pts.append(Point.from_dpoint(pya.DPoint((x+(r-w/2)*cos(i*da+th))/1, (y+(r-w/2)*sin(i*da+th))/1)))
-  return Polygon(pts)</text>
+    x = -radius
+    y = radius
+    theta_start = 270
+    theta_stop = 360
+    circle_fraction = abs(theta_start-theta_stop) / 360.0
+    npoints = int(points_per_circle(radius*dbu) * circle_fraction)
+    if npoints==0:
+      npoints = 1
+    da = 2 * pi / npoints * circle_fraction # increment, in radians
+    pts = []
+    th = theta_start / 360.0 * 2 * pi
+    for i in range(0, npoints+1):
+      pts.append(Point.from_dpoint(pya.DPoint((x+(radius+width/2)*cos(i*da+th))/1, (y+(radius+width/2)*sin(i*da+th))/1)))
+    for i in range(npoints, -1, -1):
+      pts.append(Point.from_dpoint(pya.DPoint((x+(radius-width/2)*cos(i*da+th))/1, (y+(radius-width/2)*sin(i*da+th))/1)))
+      
+    return Polygon(pts)
+    </text>
 </klayout-macro>
