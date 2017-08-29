@@ -105,7 +105,7 @@ except ImportError:
   print("no numpy")
   MODULE_NUMPY = False
 
-
+dbu = 0.001
 
 # SiEPIC-EBeam-PDK Layers:
 LayerSi = pya.LayerInfo(1, 0)

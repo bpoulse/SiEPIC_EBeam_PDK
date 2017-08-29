@@ -184,7 +184,7 @@ class WaveguideBuilder():
       self.window.findChild('bezier').setEnabled(True)
     else:
       self.window.findChild('bezier').setEnabled(False)
-      
+  
   def show(self):
     self.window.show()
 
@@ -519,7 +519,6 @@ def createWaveguide(ly, cell, params, t_width, adiabatic, bezier):
   dbu = ly.dbu
   LayerDevRecN = ly.layer(LayerInfo(68, 0))
 
-  added = False
   for param in params:
     radius, path, layer = param
     
@@ -616,7 +615,7 @@ def createBentWaveguide(width, radius, adiab, bezier):
     outer.append(Point(L-width/2, L))
     inner.append(Point(L+width/2, L))
 
-    pts = outer + inner[::-1}
+    pts = outer + inner[::-1]
     for i in range(0, len(pts)):
       pts[i] += Point(-L, 0)
     
