@@ -52,20 +52,29 @@ class Net():
     return self
 
 class Pin():
-
+  
   def __init__(self, path, _type):
     from .utils import angle_vector
     pts = path.get_points()
+    self.path = path
     self.center = (pts[0]+pts[1])*0.5
     self.rotation = angle_vector(pts[0]-pts[1])
     self.type = _type
     
+  def transform(self, trans):
+    from .utils import angle_vector
+    self.path = self.path.transformed(trans)
+    pts = self.path.get_points()
+    self.center = (pts[0]+pts[1])*0.5
+    self.rotation = angle_vector(pts[0]-pts[1])
+    return self
+
 class WaveguideGUI():
 
   def __init__(self):
     import os
   
-    ui_file = pya.QFile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "files", "waveguidebuilder.ui"))
+    ui_file = pya.QFile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "files", "waveguide_gui.ui"))
     ui_file.open(pya.QIODevice().ReadOnly)
     self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
     ui_file.close
@@ -76,8 +85,7 @@ class WaveguideGUI():
     table.setColumnWidth(0, 140)
     table.setColumnWidth(1, 50)
     table.setColumnWidth(2, 50)
-    
-    from . import scripts
+
     #Button Bindings
     self.window.findChild('ok').clicked(self.ok)
     self.window.findChild('cancel').clicked(self.close)
@@ -239,11 +247,57 @@ class WaveguideGUI():
         if params['width'] < w:
           params['width'] = w
     return params
+
+class CalibreGUI():
+  def __init__(self):
+    import os
   
+    ui_file = pya.QFile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "files", "calibre_drc_gui.ui"))
+    ui_file.open(pya.QIODevice().ReadOnly)
+    self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
+    ui_file.close
+    
+    #Button Bindings
+    self.window.findChild('connect').clicked(self.ok)
+    self.window.findChild('cancel').clicked(self.close)
+    self.status = None
+    
+  def show(self):
+    self.window.show()
+  
+  def close(self, val):
+    self.status = False
+    self.window.close()
+    from . import scripts
+    scripts.calibreDRC()
+
+  def ok(self, val):
+    self.status = True
+    self.window.close()
+    from . import scripts
+    scripts.calibreDRC()
+    
+  def return_status(self):
+    status = self.status
+    self.status = None
+    return status
+  
+  def get_parameters(self):
+    return {'url': self.window.findChild('url').text,
+            'port': self.window.findChild('port').text,
+            'pdk': self.window.findChild('pdk').text,
+            'calibre': self.window.findChild('calibre').text,
+            'identity': self.window.findChild('identity').text}
+
 class MonteCarloGUI():
 
   def __init__(self):
-    pass
+    import os
+  
+    ui_file = pya.QFile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "files", "monte_carlo_gui.ui"))
+    ui_file.open(pya.QIODevice().ReadOnly)
+    self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
+    ui_file.close
     
   def exec(self):
     pass

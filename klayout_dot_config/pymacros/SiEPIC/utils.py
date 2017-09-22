@@ -32,17 +32,21 @@ def enum(*sequential, **named):
     return type('Enum', (), enums)
 
 #Return all selected paths. If nothing is selected, select paths automatically
-def select_paths(lyr):
+def select_paths(lyr, cell = None):
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
     raise Exception("No view selected")
-  ly = lv.active_cellview().layout() 
-  if ly == None:
-    raise Exception("No active layout")
-  cell = lv.active_cellview().cell
-  if cell == None:
-    raise Exception("No active cell")
-  
+
+  if cell is None:
+    ly = lv.active_cellview().layout() 
+    if ly == None:
+      raise Exception("No active layout")
+    cell = lv.active_cellview().cell
+    if cell == None:
+      raise Exception("No active cell")
+  else:
+    ly = cell.layout()
+    
   selection = lv.object_selection
   if selection == []:
     itr = cell.begin_shapes_rec(ly.layer(lyr))
@@ -56,21 +60,25 @@ def select_paths(lyr):
       itr.next()
     lv.object_selection = selection
   else:
-    lv.object_selection = [o for o in selection if o.shape.is_path()]
+    lv.object_selection = [o for o in selection if (not o.is_cell_inst()) and o.shape.is_path()]
     
   return lv.object_selection
   
 #Return all selected waveguides. If nothing is selected, select waveguides automatically
-def select_waveguides():
+def select_waveguides(cell = None):
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
     raise Exception("No view selected")
-  ly = lv.active_cellview().layout() 
-  if ly == None:
-    raise Exception("No active layout")
-  cell = lv.active_cellview().cell
-  if cell == None:
-    raise Exception("No active cell")
+
+  if cell is None:
+    ly = lv.active_cellview().layout() 
+    if ly == None:
+      raise Exception("No active layout")
+    cell = lv.active_cellview().cell
+    if cell == None:
+      raise Exception("No active cell")
+  else:
+    ly = cell.layout()
 
   selection = lv.object_selection
   if selection == []:
@@ -121,7 +129,7 @@ def arc(radius, start, stop):
   da = 2*pi/points_per_circle(radius)
   n = int(abs(stop-start)/da)
   if n == 0: n = 1
-  return [pya.Point(-radius, radius) + pya.Point.from_dpoint(pya.DPoint(radius*cos(start+i*da), radius*sin(start+i*da))) for i in range(0, n+1) ]
+  return [pya.Point.from_dpoint(pya.DPoint(radius*cos(start+i*da), radius*sin(start+i*da))) for i in range(0, n+1) ]
 
 #Create a bezier curve. While there are parameters for start and stop in degrees, this is currently only implemented for 90 degree bends
 def arc_bezier(radius, start, stop, bezier):

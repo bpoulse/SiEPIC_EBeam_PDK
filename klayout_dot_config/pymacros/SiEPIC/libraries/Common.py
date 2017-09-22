@@ -70,9 +70,9 @@ class Waveguide(pya.PCellDeclarationHelper):
         if (dis  < pt_radius):
           pt_radius = dis if i==len(pts)-2 else dis/2
         if(self.adiab):
-          arc_pts = arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), self.bezier)
+          arc_pts = [pya.Point(-pt_radius, pt_radius) + pt for pt in arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), self.bezier)]
         else:
-          arc_pts = arc(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]))
+          arc_pts = [pya.Point(-pt_radius, pt_radius) + pt for pt in arc(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]))]
 
         turn = ((angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90)/90
         angle = angle_vector(pts[i]-pts[i-1])/90
@@ -119,8 +119,8 @@ class Ring(pya.PCellDeclarationHelper):
     radius = self.radius/dbu
     width = self.width/dbu
     
-    poly = pya.Polygon(arc(radius+width/2, 0, 360)).transformed(pya.Trans(radius+width/2, -(radius+width/2)))
-    hole = pya.Polygon(arc(radius-width/2, 0, 360)).transformed(pya.Trans(radius-width/2, -(radius-width/2)))
+    poly = pya.Polygon(arc(radius+width/2, 0, 360))
+    hole = pya.Polygon(arc(radius-width/2, 0, 360))
     poly.insert_hole(hole.get_points())
     self.cell.shapes(layer).insert(poly)
 

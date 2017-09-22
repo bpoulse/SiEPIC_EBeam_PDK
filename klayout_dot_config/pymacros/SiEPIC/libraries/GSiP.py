@@ -193,45 +193,45 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     from ..utils import arc
 
     #Create the N Layer
-    self.cell.shapes(LayernN).insert(pya.Path(arc(r_n, angle_min_doping, angle_max_doping), w_1).transformed(pya.Trans(r_n, -r_n)).transformed(t).simple_polygon())
+    self.cell.shapes(LayernN).insert(pya.Path(arc(r_n, angle_min_doping, angle_max_doping), w_1).transformed(t).simple_polygon())
 
     #Create the P Layer
-    self.cell.shapes(LayerpN).insert(pya.Path(arc(r_p, angle_min_doping, angle_max_doping), w_1).transformed(pya.Trans(r_p, -r_p)).transformed(t).simple_polygon())
+    self.cell.shapes(LayerpN).insert(pya.Path(arc(r_p, angle_min_doping, angle_max_doping), w_1).transformed(t).simple_polygon())
     
     #Create the N+ Layer
-    self.cell.shapes(LayernpN).insert(pya.Path(arc(r_np, angle_min_doping, angle_max_doping), w_1).transformed(pya.Trans(r_np, -r_np)).transformed(t).simple_polygon())
+    self.cell.shapes(LayernpN).insert(pya.Path(arc(r_np, angle_min_doping, angle_max_doping), w_1).transformed(t).simple_polygon())
 
     #Create the P+ Layer
-    self.cell.shapes(LayerppN).insert(pya.Path(arc(r_pp, angle_min_doping, angle_max_doping), w_1).transformed(pya.Trans(r_pp, -r_pp)).transformed(t).simple_polygon())
+    self.cell.shapes(LayerppN).insert(pya.Path(arc(r_pp, angle_min_doping, angle_max_doping), w_1).transformed(t).simple_polygon())
     
     #Create the N++ Layer
-    self.cell.shapes(LayernppN).insert(pya.Path(arc(r_npp, angle_min_doping, angle_max_doping), w_1).transformed(pya.Trans(r_npp, -r_npp)).transformed(t).simple_polygon())
+    self.cell.shapes(LayernppN).insert(pya.Path(arc(r_npp, angle_min_doping, angle_max_doping), w_1).transformed(t).simple_polygon())
 
     #Create the P+ +Layer
-    poly = pya.Path(arc(r_ppp, angle_min_doping, angle_max_doping), w_2).transformed(pya.Trans(r_ppp, -r_ppp)).transformed(t).simple_polygon()
+    poly = pya.Path(arc(r_ppp, angle_min_doping, angle_max_doping), w_2).transformed(t).simple_polygon()
     self.cell.shapes(LayerpppN).insert(pya.Region(poly) - pya.Region(pya.Box(x0-r_ppp-w_2/2, y_offset-w/2 - 0.75/dbu, x0+r_ppp+w/2, y_offset+w/2 + 0.75/dbu)))
     
     #Create the VC Layer
-    self.cell.shapes(LayervcN).insert(pya.Path(arc(r_vc1, angle_min_VC, angle_max_VC), w_vc).transformed(pya.Trans(r_vc1, -r_vc1)).transformed(t).simple_polygon())
+    self.cell.shapes(LayervcN).insert(pya.Path(arc(r_vc1, angle_min_VC, angle_max_VC), w_vc).transformed(t).simple_polygon())
 
-    poly = pya.Path(arc(r_vc2, angle_min_VC, angle_max_VC), w_vc).transformed(pya.Trans(r_vc2, -r_vc2)).transformed(t).simple_polygon()
+    poly = pya.Path(arc(r_vc2, angle_min_VC, angle_max_VC), w_vc).transformed(t).simple_polygon()
     self.cell.shapes(LayervcN).insert(pya.Region(poly) - pya.Region(pya.Box(x0-r_vc2-w_vc/2, y_offset-w/2 - 1.5/dbu, x0+r_vc2+w_vc/2, y_offset+w/2 + 1.5/dbu)))
     
     #Create the M1 Layer
-    self.cell.shapes(Layerm1N).insert(pya.Polygon(arc(w_m1_in, angle_min_doping, angle_max_doping) + [pya.Point(-w_m1_in, w_m1_in)]).transformed(pya.Trans(w_m1_in, -w_m1_in)).transformed(t))
-    self.cell.shapes(Layerm1N).insert(pya.Polygon(arc(w_m1_in/2.0, 0, 360)).transformed(pya.Trans(w_m1_in/2.0, -w_m1_in/2.0)).transformed(t))
-    self.cell.shapes(Layerm1N).insert(pya.Path(arc(r_m1_out, angle_min_M1, angle_max_M1), w_m1_out).transformed(pya.Trans(r_m1_out, -r_m1_out)).transformed(t).simple_polygon())
+    self.cell.shapes(Layerm1N).insert(pya.Polygon(arc(w_m1_in, angle_min_doping, angle_max_doping) + [pya.Point(-w_m1_in, w_m1_in)]).transformed(t))
+    self.cell.shapes(Layerm1N).insert(pya.Polygon(arc(w_m1_in/2.0, 0, 360)).transformed(t))
+    self.cell.shapes(Layerm1N).insert(pya.Path(arc(r_m1_out, angle_min_M1, angle_max_M1), w_m1_out).transformed(t).simple_polygon())
 
     boxM11 = pya.Box(x0-w_via, y0 + r_m1_out + w_m1_out-h_via, x0+w_via, y0 + r_m1_out + w_m1_out+h_via)
     shapes(Layerm1N).insert(boxM11)
     
     #Create the ML Layer
-    self.cell.shapes(LayermlN).insert(pya.Polygon(arc(w_m1_in/2.0, 0, 360)).transformed(pya.Trans(w_m1_in/2.0, -w_m1_in/2.0)).transformed(t))
+    self.cell.shapes(LayermlN).insert(pya.Polygon(arc(w_m1_in/2.0, 0, 360)).transformed(t))
     
     #Create the VL Layer, as well as the electrical PinRec geometries
     # centre contact (P, anode):
-    self.cell.shapes(LayervlN).insert(pya.Polygon(arc(r_vl, 0, 360)).transformed(pya.Trans(r_vl, -r_vl)).transformed(t))
-    self.cell.shapes(LayerPinRecN).insert(pya.Polygon(arc(r_vl, 0, 360)).transformed(pya.Trans(r_vl, -r_vl)).transformed(t))
+    self.cell.shapes(LayervlN).insert(pya.Polygon(arc(r_vl, 0, 360)).transformed(t))
+    self.cell.shapes(LayerPinRecN).insert(pya.Polygon(arc(r_vl, 0, 360)).transformed(t))
     shapes(LayerPinRecN).insert(pya.Text ("elec1a", pya.Trans(x0,y0))).text_size = 0.5/dbu
     shapes(LayerPinRecN).insert(pya.Box(x0-w_via/2, y0-w_via/2, x0+w_via/2, y0+w_via/2))
     
@@ -251,7 +251,7 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     shapes(LayerPinRecN).insert(pya.Text ("elec2h1", pya.Trans(x0-(r_mh_in)*cos(angle_min_MH/180*pi) - 5.0/dbu,-w/2.0 -  7.5/dbu))).text_size = 0.5/dbu
 
     #Create the MH Layer
-    self.cell.shapes(LayermhN).insert(pya.Path(arc(r_mh, angle_min_MH, angle_max_MH), w_mh).transformed(pya.Trans(r_mh, -r_mh)).transformed(t).simple_polygon())
+    self.cell.shapes(LayermhN).insert(pya.Path(arc(r_mh, angle_min_MH, angle_max_MH), w_mh).transformed(t).simple_polygon())
     boxMH1 = pya.Box(x0+(r_mh_in)*cos(angle_min_MH/180*pi), -w/2.0 -  2.5/dbu, x0 + (r_mh_in)*cos(angle_min_MH/180*pi) + w_mh, y0 +(r_mh_in)*sin(angle_min_MH/180*pi))
     shapes(LayermhN).insert(boxMH1)
     boxMH2 = pya.Box(x0-(r_mh_in)*cos(angle_min_MH/180*pi)  - w_mh, -w/2.0 -  2.5/dbu, x0 - (r_mh_in)*cos(angle_min_MH/180*pi), y0 +(r_mh_in)*sin(angle_min_MH/180*pi))
@@ -300,8 +300,6 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     # Reference publication:
     shapes(TextLayerN).insert(pya.Text ("Ref: Raphael Dube-Demers, JLT, 2015", pya.Trans(x0 - (w_Si3 / 2 + taper_length), -w/2.0 -  12.5/dbu+4.0/dbu))).text_size = 0.7/dbu
     shapes(TextLayerN).insert(pya.Text ("http://dx.doi.org/10.1109/JLT.2015.2462804", pya.Trans(x0 - (w_Si3 / 2 + taper_length), -w/2.0 -  12.5/dbu+1.0/dbu))).text_size = 0.7/dbu
-
-    print("Done drawing the layout for - Ring_Modulator_DB: %.3f-%g" % ( self.r, self.g) )
 
 class Ring_Filter_DB(pya.PCellDeclarationHelper):
   """
@@ -450,7 +448,7 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
     shapes(LayerPinRecN).insert(pya.Text ("elec2h1", pya.Trans(x0-(r_mh_in)*cos(angle_min_MH/180*pi) - 5.0/dbu,-w/2.0 -  7.5/dbu))).text_size = 0.5/dbu
 
     #Create the MH Layer
-    poly = pya.Path(arc(self.r/dbu, angle_min_MH, angle_max_MH), w_mh).transformed(pya.Trans(self.r/dbu, -self.r/dbu)).transformed(t).simple_polygon()
+    poly = pya.Path(arc(self.r/dbu, angle_min_MH, angle_max_MH), w_mh).transformed(t).simple_polygon()
     self.cell.shapes(LayermhN).insert(poly)
     boxMH1 = pya.Box(x0+(r_mh_in)*cos(angle_min_MH/180*pi), -w/2.0 -  2.5/dbu, x0 + (r_mh_in)*cos(angle_min_MH/180*pi) + w_mh, y0 +(r_mh_in)*sin(angle_min_MH/180*pi))
     shapes(LayermhN).insert(boxMH1)
@@ -498,8 +496,6 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
     if self.textpolygon:
       layout_pgtext(self.cell, self.textl, self.w, self.r+self.w, "%.3f-%g" % ( self.r, self.g), 1)
 
-    print("Done drawing the layout for Ring_Filter_DB: %.3f-%g" % ( self.r, self.g) )
-
 class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
   def __init__(self):
     # Important: initialize the super class
@@ -508,13 +504,11 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
     self.param("a", self.TypeDouble, "Lattice Size (um)", default = 0.45)
     self.param("r_h", self.TypeDouble, "Hole Radius (um)", default = 0.15)
     self.param("m", self.TypeDouble, "Edge Width (um)", default = 0.95*0.45)
-    self.param("g", self.TypeDouble, "Coupler Gap (um)", default = 0.2)
-    self.param("n", self.TypeDouble, "Number of basis cells from corner to corner (odd)", default = 31)
+    self.param("g", self.TypeDouble, "Coupler Gap (um)", default = 0.15)
+    self.param("n", self.TypeDouble, "Number of basis cells from corner to corner (odd)", default = 37)
     self.param("r_s", self.TypeDouble, "Radius of Center Support (um)", default = 2)
-    self.param("e", self.TypeDouble, "Etch Distance (Added to Support, um)", default = 2)
+    self.param("e", self.TypeDouble, "Etch Distance (Added to Support, um)", default = 3)
     self.param("layerSi", self.TypeLayer, "Silicon Layer", default = _globals.TECHNOLOGY['LayerSi'])
-    self.param("layerSiEt1", self.TypeLayer, "Silicon Etch 1 Layer", default = _globals.TECHNOLOGY['LayerSiEtch1'])
-    self.param("layerSiEt2", self.TypeLayer, "Silicon Etch 2 Layer", default = _globals.TECHNOLOGY['LayerSiEtch2'])
     self.param("pinrec", self.TypeLayer, "PinRec Layer", default = _globals.TECHNOLOGY['LayerPinRec'])
     self.param("devrec", self.TypeLayer, "DevRec Layer", default = _globals.TECHNOLOGY['LayerDevRec'])
 
@@ -543,8 +537,6 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
     r_s = self.r_s/dbu
     e = self.e/dbu
     LayerSiN = ly.layer(self.layerSi)
-    LayerEt1N = ly.layer(self.layerSiEt1)
-    LayerEt2N = ly.layer(self.layerSiEt2)
     LayerPinRecN = ly.layer(self.pinrec)
     LayerDevRecN = ly.layer(self.devrec)
     LayerTextN = ly.layer(_globals.TECHNOLOGY['LayerText'])
@@ -567,106 +559,77 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
         y = i*a*cos(a_r)
         if(sqrt(x*x+y*y)>(r_s+e)):
           if(i==0):
-            hole = pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x+r_h, -r_h)).get_points()
-            poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x+r_h, -r_h)).get_points())
+            hole = pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, 0)).get_points()
+            poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, 0)).get_points())
           else:
-            poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x+r_h, y-r_h)).get_points())
-            poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x+r_h, -y-r_h)).get_points())
+            poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, y)).get_points())
+            poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, -y)).get_points())
             
     shapes(LayerSiN).insert(poly)
 
     # Create Area Around Resonator
     gw = 2.0/dbu
-    ew = 10.0/dbu
-    pts = [pya.Point(a_p*sin(a_r),(a_p)*cos(a_r)+g),
-           pya.Point((a_p+g)*sin(a_r),(a_p)*cos(a_r)+g),
-           pya.Point((a_p+g)*sin(a_r)+gw*tan(a_r),a_p*cos(a_r)+g-2/dbu),
-           pya.Point((a_p+g)*sin(a_r)+gw*tan(a_r)+gw-g,a_p*cos(a_r)+g-2/dbu),
-           
-           pya.Point((a_p+gw),0),
-           
-           pya.Point((a_p+g)*sin(a_r)+gw*tan(a_r)+gw-g,-(a_p*cos(a_r)+g-2/dbu)),
-           pya.Point((a_p+g)*sin(a_r)+gw*tan(a_r),-(a_p*cos(a_r)+g-2/dbu)),
-           pya.Point((a_p+g)*sin(a_r),-((a_p)*cos(a_r)+g)),
-           pya.Point(a_p*sin(a_r),-((a_p)*cos(a_r)+g)),
-           
-           pya.Point(a_p*sin(a_r),-(a_p+ew)*cos(a_r)),
-           pya.Point((a_p+ew)*sin(a_r),-(a_p+ew)*cos(a_r)),
-           
-           pya.Point((a_p+g)*sin(a_r)+gw*tan(a_r)-g+ew-4.45*tan(a_r)/dbu,-(a_p*cos(a_r)+g+2.45/dbu)),
-           pya.Point((a_p+ew),-(a_p*cos(a_r)+g+2.45/dbu)),
-           pya.Point((a_p+ew),-(a_p*cos(a_r)+g-2/dbu)),
-           pya.Point((a_p+g)*sin(a_r)+gw*tan(a_r)-g+ew,-(a_p*cos(a_r)+g-2/dbu)),
-           
-           pya.Point((a_p+ew),0),
-           
-           pya.Point((a_p+g)*sin(a_r)+gw*tan(a_r)-g+ew,a_p*cos(a_r)+g-2/dbu),
-           pya.Point((a_p+ew),a_p*cos(a_r)+g-2/dbu),
-           pya.Point((a_p+ew),a_p*cos(a_r)+g+2.45/dbu),
-           pya.Point((a_p+g)*sin(a_r)+gw*tan(a_r)-g+ew-4.45*tan(a_r)/dbu,a_p*cos(a_r)+g+2.45/dbu),
-           
-           pya.Point((a_p+ew)*sin(a_r),(a_p+ew)*cos(a_r)),
-           pya.Point(a_p*sin(a_r),(a_p+ew)*cos(a_r))]
-            
-    shapes(LayerEt2N).insert(pya.Polygon(pts))
-    shapes(LayerEt2N).insert(pya.Polygon(pts).transform(pya.Trans(90, False, pya.Point(0,0))))
-
-    # Create Photonic Crystal Coupler
-    c_l = a*(n-ceil(n/2))
+    ew = 5.0/dbu
     
-    poly = pya.Polygon([pya.Point(-a_p*sin(a_r)-0.1/dbu, 0),
-                        pya.Point(a_p*sin(a_r)+0.1/dbu, 0),
-                        pya.Point(a_p*sin(a_r)+0.1/dbu, ew*cos(a_r)-g),
-                        pya.Point(-a_p*sin(a_r)-0.1/dbu, ew*cos(a_r)-g)])
-
-    for i in range(0,14):
-      for j in range(0, (n-ceil(n/2)) + 1 if i%2==0 else (n-ceil(n/2))):
-        x = -c_l/2 + a*j if i%2==0 else -c_l/2 + a*j + a/2
-        y = m + r_h + i*a*cos(a_r)
-        poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x+r_h, y-r_h)).get_points())
+    poly = pya.Polygon([pya.Point(a_p+gw/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r), (a_p*cos(a_r)+g-gw)),
+                        pya.Point(a_p+gw/cos(a_r),0),
+                        pya.Point(a_p+gw/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r),-(a_p*cos(a_r)+g-gw)),
+                        pya.Point(a_p+(gw+ew)/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r),-(a_p*cos(a_r)+g-gw)),
+                        pya.Point(a_p+(gw+ew)/cos(a_r),0),
+                        pya.Point(a_p+(gw+ew)/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r), (a_p*cos(a_r)+g-gw))])
             
-    shapes(LayerSiN).insert(poly.transform(pya.Trans(0,(a_p)*cos(a_r)+g)))
-    shapes(LayerSiN).insert(poly.transformed(pya.Trans(0, True, pya.Point(0,0))))
+    shapes(LayerSiN).insert(poly)
+    shapes(LayerSiN).insert(poly.transform(pya.Trans(2, False, pya.Point(0,0))))
+
+    y = a_p*cos(a_r)+g+0.5/dbu+gw
+    poly = pya.Polygon([pya.Point(a_p+(gw+ew)/cos(a_r)-y*tan(a_r), y),
+                        pya.Point(-(a_p+(gw+ew)/cos(a_r)-y*tan(a_r)), y),
+                        pya.Point(-(a_p+(gw+ew)/cos(a_r))*sin(a_r), a_p*cos(a_r)+gw+ew),
+                        pya.Point((a_p+(gw+ew)/cos(a_r))*sin(a_r), a_p*cos(a_r)+gw+ew)])
     
-    poly = pya.Polygon([pya.Point((a_p+g)*sin(a_r),(a_p)*cos(a_r)+g),
-                        pya.Point((a_p+ew),(a_p)*cos(a_r)+g),
-                        pya.Point((a_p+ew),(a_p)*cos(a_r)+g+0.45/dbu),
-                        pya.Point((a_p+g)*sin(a_r),(a_p)*cos(a_r)+g+0.45/dbu)])
+    shapes(LayerSiN).insert(poly)
+    shapes(LayerSiN).insert(poly.transform(pya.Trans(0, True, pya.Point(0,0))))
+
+    
+    poly = pya.Polygon([pya.Point(a_p*sin(a_r),a_p*cos(a_r)+g),
+                        pya.Point(a_p*sin(a_r)+10/dbu,a_p*cos(a_r)+g),
+                        pya.Point(a_p+(gw+ew)/cos(a_r),a_p*cos(a_r)+g),
+                        pya.Point(a_p+(gw+ew)/cos(a_r),a_p*cos(a_r)+g+0.5/dbu),
+                        pya.Point(a_p*sin(a_r)+10/dbu,a_p*cos(a_r)+g+0.5/dbu),
+                        pya.Point(a_p*sin(a_r),a_p*cos(a_r)+g+0.275/dbu),
+                        pya.Point(-(a_p*sin(a_r)),a_p*cos(a_r)+g+0.275/dbu),
+                        pya.Point(-(a_p*sin(a_r)+10/dbu),a_p*cos(a_r)+g+0.5/dbu),
+                        pya.Point(-(a_p+(gw+ew)/cos(a_r)),a_p*cos(a_r)+g+0.5/dbu),
+                        pya.Point(-(a_p+(gw+ew)/cos(a_r)),a_p*cos(a_r)+g),
+                        pya.Point(-(a_p*sin(a_r)+10/dbu),a_p*cos(a_r)+g),
+                        pya.Point(-(a_p*sin(a_r)),a_p*cos(a_r)+g)])
     
     shapes(LayerSiN).insert(poly)
     shapes(LayerSiN).insert(poly.transformed(pya.Trans(0, True, pya.Point(0,0))))
     
-    poly = pya.Polygon([pya.Point(-(a_p+g)*sin(a_r),(a_p)*cos(a_r)+g),
-                        pya.Point(-(a_p+ew),(a_p)*cos(a_r)+g),
-                        pya.Point(-(a_p+ew),(a_p)*cos(a_r)+g+0.45/dbu),
-                        pya.Point(-(a_p+g)*sin(a_r),(a_p)*cos(a_r)+g+0.45/dbu)])
-    
-    shapes(LayerSiN).insert(poly)
-    shapes(LayerSiN).insert(poly.transformed(pya.Trans(0, True, pya.Point(0,0))))
-    
-    poly = pya.Polygon([pya.Point((a_p+ew),(a_p+ew)*cos(a_r)),
-                        pya.Point(-(a_p+ew),(a_p+ew)*cos(a_r)),
-                        pya.Point(-(a_p+ew),-(a_p+ew)*cos(a_r)),
-                        pya.Point((a_p+ew),-(a_p+ew)*cos(a_r))])
+    poly = pya.Polygon([pya.Point(a_p+(gw+ew)/cos(a_r),a_p*cos(a_r)+gw+ew),
+                        pya.Point(-(a_p+(gw+ew)/cos(a_r)),a_p*cos(a_r)+gw+ew),
+                        pya.Point(-(a_p+(gw+ew)/cos(a_r)),-(a_p*cos(a_r)+gw+ew)),
+                        pya.Point(a_p+(gw+ew)/cos(a_r),-(a_p*cos(a_r)+gw+ew))])
     shapes(LayerDevRecN).insert(poly)
     
     # Pins on the coupler:
     pin_length = 200
 
-    t = pya.Trans(-(a_p+ew),a_p*cos(a_r)+g+0.45/dbu/2)
-    shapes(LayerPinRecN).insert(pya.Path([pya.Point(-pin_length/2, 0), pya.Point(pin_length/2, 0)], 4.45/dbu).transformed(t))
+    t = pya.Trans(-(a_p+(gw+ew)/cos(a_r)),a_p*cos(a_r)+g+0.5/dbu/2)
+    shapes(LayerPinRecN).insert(pya.Path([pya.Point(-pin_length/2, 0), pya.Point(pin_length/2, 0)], 0.5/dbu).transformed(t))
     shapes(LayerPinRecN).insert(pya.Text("pin1", t)).text_size = 0.4/dbu
 
-    t = pya.Trans((a_p+ew),a_p*cos(a_r)+g+0.45/dbu/2)
-    shapes(LayerPinRecN).insert(pya.Path([pya.Point(-pin_length/2, 0), pya.Point(pin_length/2, 0)], 4.45/dbu).transformed(t))
+    t = pya.Trans(a_p+(gw+ew)/cos(a_r),a_p*cos(a_r)+g+0.5/dbu/2)
+    shapes(LayerPinRecN).insert(pya.Path([pya.Point(-pin_length/2, 0), pya.Point(pin_length/2, 0)], 0.5/dbu).transformed(t))
     shapes(LayerPinRecN).insert(pya.Text("pin2", t)).text_size = 0.4/dbu
     
-    t = pya.Trans(-(a_p+ew),-(a_p*cos(a_r)+g+0.45/dbu/2))
-    shapes(LayerPinRecN).insert(pya.Path([pya.Point(-pin_length/2, 0), pya.Point(pin_length/2, 0)], 4.45/dbu).transformed(t))
+    t = pya.Trans(-(a_p+(gw+ew)/cos(a_r)),-(a_p*cos(a_r)+g+0.5/dbu/2))
+    shapes(LayerPinRecN).insert(pya.Path([pya.Point(-pin_length/2, 0), pya.Point(pin_length/2, 0)], 0.5/dbu).transformed(t))
     shapes(LayerPinRecN).insert(pya.Text("pin3", t)).text_size = 0.4/dbu
 
-    t = pya.Trans((a_p+ew),-(a_p*cos(a_r)+g+0.45/dbu/2))    
-    shapes(LayerPinRecN).insert(pya.Path([pya.Point(-pin_length/2, 0), pya.Point(pin_length/2, 0)], 4.45/dbu).transformed(t))
+    t = pya.Trans(a_p+(gw+ew)/cos(a_r),-(a_p*cos(a_r)+g+0.5/dbu/2))
+    shapes(LayerPinRecN).insert(pya.Path([pya.Point(-pin_length/2, 0), pya.Point(pin_length/2, 0)], 0.5/dbu).transformed(t))
     shapes(LayerPinRecN).insert(pya.Text("pin4", t)).text_size = 0.4/dbu
 
 class GSiP(pya.Library):

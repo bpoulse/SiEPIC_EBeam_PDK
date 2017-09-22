@@ -66,10 +66,10 @@ TECHNOLOGY = TECHNOLOGIES['default']
 SIMPLIFY_NETLIST_EXTRACTION = True
 
 #Create GUI's
-from .core import WaveguideGUI, MonteCarloGUI, Net
+from .core import WaveguideGUI, MonteCarloGUI, CalibreGUI, Net
 WG_GUI = WaveguideGUI()
 MC_GUI = MonteCarloGUI()
-
+DRC_GUI = CalibreGUI()
 #Define global Net object that implements netlists and pin searching/connecting
 NET = Net()
 
@@ -81,3 +81,5 @@ try:
   import numpy
 except ImportError:
   MODULE_NUMPY = False
+  
+ACTIONS = []

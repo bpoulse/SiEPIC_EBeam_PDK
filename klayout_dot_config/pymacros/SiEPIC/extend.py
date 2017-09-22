@@ -329,6 +329,39 @@ def print_parameter_values(self):
   for key in params.keys():
     print("Parameter: %s, Value: %s") % (key, params[key])
 
+def find_pins(self):
+  from . import _globals
+  from .core import Pin
+  pins = []
+  it = self.begin_shapes_rec(_globals.TECHNOLOGY['LayerPinRec'])
+  while not(it.at_end()):
+    if it.shape().is_path():
+      pins.append(Pin(it.shape().path.transformed(it.itrans()), _globals.PIN_TYPES.OPTICAL))
+    it.next()
+  return pins
+  
+def find_pin(self, name):
+  from . import _globals
+  from .core import Pin
+  pins = []
+  label = None
+  it = self.begin_shapes_rec(self.layout().layer(_globals.TECHNOLOGY['LayerPinRec']))
+  while not(it.at_end()):
+    if it.shape().is_path():
+      pins.append(it.shape().path.transformed(it.itrans()))
+    if it.shape().is_text() and it.shape().text.string == name:
+      label = it.shape().text.transformed(it.itrans())
+    it.next()
+    
+  if label is None: return None
+  
+  for pin in pins:
+    pts = pin.get_points()
+    if (pts[0]+pts[1])*0.5 == pya.Point(label.x, label.y):
+      return Pin(pin, _globals.PIN_TYPES.OPTICAL)
+    
+  return None
+
 #################################################################################
 
 if hasattr(pya.Cell, "print_parameter_values"):
@@ -337,3 +370,17 @@ Redefining might cause instability and will not be performed.")
   warning.exec_()
 else:
   pya.Cell.print_parameter_values = print_parameter_values
+  
+if hasattr(pya.Cell, "find_pin"):
+  warning.setText("Warning: The function 'find_pin' in the class 'Cell', is already implemented in the KLayout Library.\n\
+Redefining might cause instability and will not be performed.")
+  warning.exec_()
+else:
+  pya.Cell.find_pin = find_pin
+
+if hasattr(pya.Cell, "find_pins"):
+  warning.setText("Warning: The function 'find_pins' in the class 'Cell', is already implemented in the KLayout Library.\n\
+Redefining might cause instability and will not be performed.")
+  warning.exec_()
+else:
+  pya.Cell.find_pins = find_pins
