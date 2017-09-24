@@ -203,7 +203,7 @@ def layout_pgtext(cell, layer, x, y, text, mag):
   param = { 
     "text": text, 
     "layer": layer, 
-    "mag": mag 
+    "mag": mag
   }
   pv = []
   for p in textpcell_decl.get_parameters():

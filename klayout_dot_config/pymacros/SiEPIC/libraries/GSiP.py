@@ -523,7 +523,7 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
     return False
 
   def produce_impl(self):
-    from ..utils import arc
+    from ..utils import arc, points_per_circle
     from math import pi, cos, sin, tan, log, sqrt, ceil
     # fetch the parameters
     dbu = self.layout.dbu
@@ -540,9 +540,35 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
     LayerPinRecN = ly.layer(self.pinrec)
     LayerDevRecN = ly.layer(self.devrec)
     LayerTextN = ly.layer(_globals.TECHNOLOGY['LayerText'])
-
+    LayerExcludeN = ly.layer(_globals.TECHNOLOGY['LayerDRCexclude'])
     a_r = pi*30/180
     a_p = (n-1)*a/2+(m+r_h)/cos(a_r)
+
+    # Create Area Around Resonator
+    gw = 2.0/dbu
+    ew = 5.0/dbu
+
+    poly = pya.Polygon([pya.Point(a_p+gw/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r)+0.4/dbu, (a_p*cos(a_r)+g-gw)),
+                        pya.Point(a_p+gw/cos(a_r)-(a_p*cos(a_r)+g-gw-0.32/dbu)*tan(a_r), (a_p*cos(a_r)+g-gw-0.32/dbu)),
+                        pya.Point(a_p+gw/cos(a_r),0),
+                        pya.Point(a_p+gw/cos(a_r)-(a_p*cos(a_r)+g-gw-0.32/dbu)*tan(a_r),-(a_p*cos(a_r)+g-gw-0.32/dbu)),
+                        pya.Point(a_p+gw/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r)+0.4/dbu,-(a_p*cos(a_r)+g-gw)),
+                        pya.Point(a_p+(gw+ew)/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r),-(a_p*cos(a_r)+g-gw)),
+                        pya.Point(a_p+(gw+ew)/cos(a_r),0),
+                        pya.Point(a_p+(gw+ew)/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r), (a_p*cos(a_r)+g-gw))])
+    shapes(LayerSiN).insert(poly)
+    shapes(LayerSiN).insert(poly.transformed(pya.Trans(2, False, pya.Point(0,0))))
+
+    y = a_p*cos(a_r)+g+0.5/dbu+gw
+    poly = pya.Polygon([pya.Point(a_p+(gw+ew)/cos(a_r)-(y+0.32/dbu)*tan(a_r), (y+0.32/dbu)),##
+                        pya.Point(a_p+(gw+ew)/cos(a_r)-y*tan(a_r)-0.4/dbu, y),
+                        pya.Point(-(a_p+(gw+ew)/cos(a_r)-y*tan(a_r)-0.4/dbu), y),
+                        pya.Point(-(a_p+(gw+ew)/cos(a_r)-(y+0.32/dbu)*tan(a_r)), (y+0.32/dbu)),
+                        pya.Point(-(a_p+(gw+ew)/cos(a_r))*sin(a_r), a_p*cos(a_r)+gw+ew),
+                        pya.Point((a_p+(gw+ew)/cos(a_r))*sin(a_r), a_p*cos(a_r)+gw+ew)])
+    
+    shapes(LayerSiN).insert(poly)
+    shapes(LayerSiN).insert(poly.transformed(pya.Trans(0, True, pya.Point(0,0))))
 
     # Create Photonic Crystal Ring Resonator
     poly = pya.Polygon([pya.Point(a_p*sin(a_r),a_p*cos(a_r)),
@@ -551,6 +577,13 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
                         pya.Point(-a_p*sin(a_r),-a_p*cos(a_r)),
                         pya.Point(-a_p,0),
                         pya.Point(-a_p*sin(a_r),a_p*cos(a_r))])
+                        
+    drc_poly = pya.Polygon([pya.Point(a/2,round(a/2*tan(a_r),0)),
+                        pya.Point(0,round(a/2/cos(a_r),0)),
+                        pya.Point(-a/2,round(a/2*tan(a_r),0)),
+                        pya.Point(-a/2,round(-a/2*tan(a_r),0)),
+                        pya.Point(0,round(-a/2/cos(a_r),0)),
+                        pya.Point(a/2,round(-a/2*tan(a_r),0))])
 
     # Create Photonic Crystal
     for i in range(0,ceil(n/2)):
@@ -561,35 +594,14 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
           if(i==0):
             hole = pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, 0)).get_points()
             poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, 0)).get_points())
+            shapes(LayerExcludeN).insert(drc_poly.transformed(pya.Trans(x, 0)))
           else:
             poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, y)).get_points())
             poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, -y)).get_points())
+            shapes(LayerExcludeN).insert(drc_poly.transformed(pya.Trans(x, y)))
+            shapes(LayerExcludeN).insert(drc_poly.transformed(pya.Trans(x, -y)))
             
     shapes(LayerSiN).insert(poly)
-
-    # Create Area Around Resonator
-    gw = 2.0/dbu
-    ew = 5.0/dbu
-    
-    poly = pya.Polygon([pya.Point(a_p+gw/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r), (a_p*cos(a_r)+g-gw)),
-                        pya.Point(a_p+gw/cos(a_r),0),
-                        pya.Point(a_p+gw/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r),-(a_p*cos(a_r)+g-gw)),
-                        pya.Point(a_p+(gw+ew)/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r),-(a_p*cos(a_r)+g-gw)),
-                        pya.Point(a_p+(gw+ew)/cos(a_r),0),
-                        pya.Point(a_p+(gw+ew)/cos(a_r)-(a_p*cos(a_r)+g-gw)*tan(a_r), (a_p*cos(a_r)+g-gw))])
-            
-    shapes(LayerSiN).insert(poly)
-    shapes(LayerSiN).insert(poly.transform(pya.Trans(2, False, pya.Point(0,0))))
-
-    y = a_p*cos(a_r)+g+0.5/dbu+gw
-    poly = pya.Polygon([pya.Point(a_p+(gw+ew)/cos(a_r)-y*tan(a_r), y),
-                        pya.Point(-(a_p+(gw+ew)/cos(a_r)-y*tan(a_r)), y),
-                        pya.Point(-(a_p+(gw+ew)/cos(a_r))*sin(a_r), a_p*cos(a_r)+gw+ew),
-                        pya.Point((a_p+(gw+ew)/cos(a_r))*sin(a_r), a_p*cos(a_r)+gw+ew)])
-    
-    shapes(LayerSiN).insert(poly)
-    shapes(LayerSiN).insert(poly.transform(pya.Trans(0, True, pya.Point(0,0))))
-
     
     poly = pya.Polygon([pya.Point(a_p*sin(a_r),a_p*cos(a_r)+g),
                         pya.Point(a_p*sin(a_r)+10/dbu,a_p*cos(a_r)+g),
@@ -612,6 +624,14 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
                         pya.Point(-(a_p+(gw+ew)/cos(a_r)),-(a_p*cos(a_r)+gw+ew)),
                         pya.Point(a_p+(gw+ew)/cos(a_r),-(a_p*cos(a_r)+gw+ew))])
     shapes(LayerDevRecN).insert(poly)
+    
+    if g < 0.2/dbu:
+      poly = pya.Polygon([pya.Point(a_p*sin(a_r)+0.2/dbu,a_p*cos(a_r)-0.2/dbu),
+                        pya.Point(a_p*sin(a_r)+0.2/dbu,a_p*cos(a_r)+g+0.2/dbu),
+                        pya.Point(-(a_p*sin(a_r)+0.2/dbu),a_p*cos(a_r)+g+0.2/dbu),
+                        pya.Point(-(a_p*sin(a_r)+0.2/dbu),a_p*cos(a_r)-0.2/dbu)])
+      shapes(LayerExcludeN).insert(poly)
+      shapes(LayerExcludeN).insert(poly.transformed(pya.Trans(0, True, 0, 0)))
     
     # Pins on the coupler:
     pin_length = 200
