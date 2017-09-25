@@ -152,10 +152,9 @@ def calibreDRC(params = None, cell = None):
       raise Exception("Missing information")
 
     lv.transaction("calibre drc")
-    info = pya.QMessageBox()
-    info.setStyleSheet("QLabel{min-width: 125px;}")
-    info.setStandardButtons(pya.QMessageBox.NoButton)
-    
+    progress = pya.RelativeProgress("Calibre DRC", 100)
+    progress.value = 0
+    pya.Application.instance().main_window().update()
     # Python version
     import sys, os, pipes, codecs
     if sys.platform.startswith('win'):
@@ -169,15 +168,14 @@ def calibreDRC(params = None, cell = None):
     
     results_file = os.path.basename(local_pathfile) + ".rve"
     results_pathfile = os.path.join(os.path.dirname(local_pathfile), results_file)
-
-    info.setText("Saving layout as temporary file.")
-    info.show()
+    progress.format = "Saving temporary layout"
     tmp_ly = ly.dup()
     [cell.flatten(True) for cell in tmp_ly.each_cell()]
     opts = pya.SaveLayoutOptions()
     opts.format = "GDS2"
     tmp_ly.write(local_pathfile, opts)
-    info.hide()
+    progress.value = 25
+    pya.Application.instance().main_window().update()
     with codecs.open(os.path.join(local_path, 'run_calibre'), 'w', encoding="utf-8") as file:
       cal_script  = '#!/bin/tcsh \n'
       cal_script += 'source %s \n' % params['calibre']
@@ -202,38 +200,41 @@ def calibreDRC(params = None, cell = None):
     version = sys.version
     if version.find("2.") > -1:
       import commands
-      cmd = commands.getstatusoutput
-      info.setText("Uploading layout and Calibre scripts")
-      info.show()
+      pya.Application.instance().main_window().update()
+      progress.format = "Uploading layout and scripts"
       out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s "%s" %s:%s' % (os.path.dirname(local_pathfile), params['port'], os.path.basename(local_pathfile), params['url'], remote_path))
       out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s %s %s:%s' % (local_path, params['port'], 'run_calibre', params['url'], remote_path))
       out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s %s %s:%s' % (local_path, params['port'], 'drc.cal', params['url'], remote_path))
-      info.hide()
-      info.setText("Checking layout for errors")
-      info.show()
+      progress.value = 50
+      progress.format = "Checking layout for errors"
+      pya.Application.instance().main_window().update()
       out = cmd('ssh -i C:/Users/bpoul/.ssh/drc -p%s %s "%s"' % (params['port'], params['url'], "cd " + remote_path +" && source run_calibre"))
-      info.hide()
-      info.setText("Downloading results")
-      info.show()
+      progress.value = 75
+      progress.format = "Downloading Errors"
+      pya.Application.instance().main_window().update()
       out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s %s:%s %s' % (os.path.dirname(local_pathfile), params['port'], params['url'], remote_path + "/drc.rve", results_file))
-      info.hide()
+      progress.value = 100
+      pya.Application.instance().main_window().update()
     elif version.find("3.") > -1:
       import subprocess
       cmd = subprocess.check_output
-      info.setText("Uploading layout and Calibre scripts")
-      info.show()
+      progress.format = "Uploading layout and scripts"
+      pya.Application.instance().main_window().update()
       out = cmd('cd "%s" && scp -i %s -P%s "%s" %s:%s' % (os.path.dirname(local_pathfile), params['identity'], params['port'], os.path.basename(local_pathfile), params['url'], remote_path), shell=True)
       out = cmd('cd "%s" && scp -i %s -P%s %s %s:%s' % (local_path, params['identity'], params['port'], 'run_calibre', params['url'], remote_path), shell=True)
       out = cmd('cd "%s" && scp -i %s -P%s %s %s:%s' % (local_path, params['identity'], params['port'], 'drc.cal', params['url'], remote_path), shell=True)
-      info.hide()
-      info.setText("Checking layout for errors")
-      info.show()
+      progress.value = 50
+      progress.format = "Checking layout for errors"
+      pya.Application.instance().main_window().update()
       out = cmd('ssh -i %s -p%s %s "%s"' % (params['identity'], params['port'], params['url'], "cd " + remote_path +" && source run_calibre"), shell=True)
-      info.hide()
-      info.setText("Downloading results")
-      info.show()
+      progress.value = 75
+      progress.format = "Downloading Errors"
+      pya.Application.instance().main_window().update()
       out = cmd('cd "%s" && scp -i %s -P%s %s:%s %s' % (os.path.dirname(local_pathfile), params['identity'], params['port'], params['url'], remote_path + "/drc.rve", results_file), shell=True)
-      info.hide()
+      progress.value = 100
+      pya.Application.instance().main_window().update()
+      
+    progress._destroy()
     if os.path.exists(results_pathfile):
       rdb_i = lv.create_rdb("Calibre Verification")
       rdb = lv.rdb(rdb_i)
@@ -242,12 +243,62 @@ def calibreDRC(params = None, cell = None):
       rdb_cell = rdb.create_cell(cell.name)
       lv.show_rdb(rdb_i, lv.active_cellview().cell_index)
     else:
-      v = pya.MessageBox.warning("Errors", "Something failed during the server Calibre DRC check.",  pya.MessageBox.Ok)
+      pya.MessageBox.warning("Errors", "Something failed during the server Calibre DRC check.",  pya.MessageBox.Ok)
 
     lv.commit()
     
 def auto_coord_extract():
-  print("auto_coord_extract")
+  from . import _globals
+  def gen_ui():
+    global wdg
+    if 'wdg' in globals():
+      if wdg is not None and not wdg.destroyed():
+        wdg.destroy()
+    global wtext
+  
+    def button_clicked(checked):
+      """ Event handler: "OK" button clicked """
+      wdg.destroy()
+  
+    wdg = pya.QDialog(pya.Application.instance().main_window())
+  
+    wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
+    wdg.setWindowTitle("SiEPIC-EBeam-PDK: Automated measurement coordinate extraction")
+  
+    wdg.resize(1000, 500)
+    wdg.move(1, 1)
+  
+    grid = pya.QGridLayout(wdg)
+  
+    windowlabel1 = pya.QLabel(wdg)
+    windowlabel1.setText("output:")
+    wtext = pya.QTextEdit(wdg)
+    wtext.enabled = True
+    wtext.setText('')
+  
+    ok = pya.QPushButton("OK", wdg)
+    ok.clicked(button_clicked)   # attach the event handler
+    netlist = pya.QPushButton("Save", wdg) # not implemented
+  
+    grid.addWidget(windowlabel1, 0, 0, 1, 3)
+    grid.addWidget(wtext, 1, 1, 3, 3)
+    grid.addWidget(netlist, 4, 2)
+    grid.addWidget(ok, 4, 3)
+  
+    grid.setRowStretch(3, 1)
+    grid.setColumnStretch(1, 1)
+  
+    wdg.show()
+  
+  # Create a GUI for the output:
+  gen_ui()
+  wtext.insertHtml('<br>* Automated measurement coordinates:<br><br>')
+  
+  # Find the automated measurement coordinates:
+  from .utils import find_automated_measurement_labels
+  cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+  t = find_automated_measurement_labels(cell, cell.layout().layer(_globals.TECHNOLOGY['LayerText']))
+  wtext.insertHtml (t)
   
 def layout_check():
   print("layout_check")

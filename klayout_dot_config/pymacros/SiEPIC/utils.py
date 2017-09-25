@@ -204,7 +204,28 @@ def layout_pgtext(cell, layer, x, y, text, mag, inv = False):
                                                       "inverse": inv })
   dbu = cell.layout().dbu
   cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, x/dbu, y/dbu)))
-  
+
+def find_automated_measurement_labels(cell, LayerTextN):
+  # example usage:
+  # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+  # LayerText = pya.LayerInfo(10, 0)
+  # LayerTextN = topcell.layout().layer(LayerText)
+  # find_automated_measurement_labels(topcell, LayerTextN)
+  t = ''
+  dbu = cell.layout().dbu
+  iter = cell.begin_shapes_rec(LayerTextN)
+  i=0
+  while not(iter.at_end()):
+    if iter.shape().is_text():
+      text = iter.shape().text
+      if text.string.find("opt_in") > -1:
+        i+=1
+        text2 = iter.shape().text.transformed(iter.itrans())
+        t += "label: %s, location: (%s, %s) <br>" %(text.string, text2.x*dbu, text2.y*dbu )
+    iter.next()
+  t += "<br>*** Number of automated measurement labels: %s.<br>" % i
+  return t
+
 try:
   advance_iterator = next
 except NameError:
