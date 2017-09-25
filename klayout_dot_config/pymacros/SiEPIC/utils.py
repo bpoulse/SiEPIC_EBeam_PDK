@@ -20,6 +20,12 @@ def load_technology():
         except Exception as e:
          print(e)
 
+      if not any('Test' in library for library in pya.Library.library_names()):
+        try:
+          getattr(import_module('.libraries.Test', 'SiEPIC'), 'Test')()
+        except Exception as e:
+         print(e)
+
       if not any([_globals.TECHNOLOGY['library'] in library for library in pya.Library.library_names()]):
         try:
           getattr(import_module('.libraries.%s' % (_globals.TECHNOLOGY['library']), 'SiEPIC'), _globals.TECHNOLOGY['library'])()
@@ -191,38 +197,14 @@ def pt_intersects_segment(a, b, c):
 # Example
 # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
 # layout_pgtext(cell, LayerInfo(10, 0), 0, 0, "test", 1)
-def layout_pgtext(cell, layer, x, y, text, mag):
-  # for the Text polygon:
-  textlib = pya.Library.library_by_name("Basic")
-  if textlib == None:
-    raise Exception("Unknown lib 'Basic'")
-
-  textpcell_decl = textlib.layout().pcell_declaration("TEXT")
-  if textpcell_decl == None:
-    raise Exception("Unknown PCell 'TEXT'")
-  param = { 
-    "text": text, 
-    "layer": layer, 
-    "mag": mag
-  }
-  pv = []
-  for p in textpcell_decl.get_parameters():
-    if p.name in param:
-      pv.append(param[p.name])
-    else:
-      pv.append(p.default)
-  # "fake PCell code" 
-  text_cell = cell.layout().create_cell("Temp_text_cell")
-  textlayer_index = cell.layout().layer(layer)
-  textpcell_decl.produce(cell.layout(), [ textlayer_index ], pv, text_cell)
-
-  # fetch the database parameters
+def layout_pgtext(cell, layer, x, y, text, mag, inv = False):
+  pcell = cell.layout().create_cell("TEXT", "Basic", {"text": text, 
+                                                      "layer": layer, 
+                                                      "mag": mag,
+                                                      "inverse": inv })
   dbu = cell.layout().dbu
-  t = pya.Trans(pya.Trans.R0, x/dbu, y/dbu)
-  cell.insert(pya.CellInstArray(text_cell.cell_index(), t))
-  # flatten and delete polygon text cell
-  cell.flatten(True)
-          
+  cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, x/dbu, y/dbu)))
+  
 try:
   advance_iterator = next
 except NameError:

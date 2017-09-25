@@ -11,6 +11,4 @@ class EBeam(pya.Library):
     self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC-EBeam.gds"))
     [self.layout().rename_cell(i, self.layout().cell_name(i).replace('_', ' ')) for i in range(0, self.layout().cells())]
     
-    #self.layout().register_pcell("", ())
-    
     self.register("SiEPIC EBeam Library")

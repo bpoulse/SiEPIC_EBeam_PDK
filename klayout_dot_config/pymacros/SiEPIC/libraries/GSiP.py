@@ -506,6 +506,7 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
     self.param("m", self.TypeDouble, "Edge Width (um)", default = 0.95*0.45)
     self.param("g", self.TypeDouble, "Coupler Gap (um)", default = 0.15)
     self.param("n", self.TypeDouble, "Number of basis cells from corner to corner (odd)", default = 37)
+    self.param("c_w", self.TypeDouble, "Coupler width", default = 0.275)
     self.param("r_s", self.TypeDouble, "Radius of Center Support (um)", default = 2)
     self.param("e", self.TypeDouble, "Etch Distance (Added to Support, um)", default = 3)
     self.param("layerSi", self.TypeLayer, "Silicon Layer", default = _globals.TECHNOLOGY['LayerSi'])
@@ -534,6 +535,7 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
     m = self.m/dbu
     g = self.g/dbu
     n = int(self.n)
+    c_w = self.c_w/dbu
     r_s = self.r_s/dbu
     e = self.e/dbu
     LayerSiN = ly.layer(self.layerSi)
@@ -608,8 +610,8 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
                         pya.Point(a_p+(gw+ew)/cos(a_r),a_p*cos(a_r)+g),
                         pya.Point(a_p+(gw+ew)/cos(a_r),a_p*cos(a_r)+g+0.5/dbu),
                         pya.Point(a_p*sin(a_r)+10/dbu,a_p*cos(a_r)+g+0.5/dbu),
-                        pya.Point(a_p*sin(a_r),a_p*cos(a_r)+g+0.275/dbu),
-                        pya.Point(-(a_p*sin(a_r)),a_p*cos(a_r)+g+0.275/dbu),
+                        pya.Point(a_p*sin(a_r),a_p*cos(a_r)+g+c_w),
+                        pya.Point(-(a_p*sin(a_r)),a_p*cos(a_r)+g+c_w),
                         pya.Point(-(a_p*sin(a_r)+10/dbu),a_p*cos(a_r)+g+0.5/dbu),
                         pya.Point(-(a_p+(gw+ew)/cos(a_r)),a_p*cos(a_r)+g+0.5/dbu),
                         pya.Point(-(a_p+(gw+ew)/cos(a_r)),a_p*cos(a_r)+g),

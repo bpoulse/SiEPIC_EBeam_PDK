@@ -218,7 +218,7 @@ class LumericalINTERCONNECT_Detector(pya.PCellDeclarationHelper):
 
 class Common(pya.Library):
   def __init__(self):
-    print("Initializing SiEPIC Common library.")
+    print("Initializing SiEPIC Common Library.")
     
     self.description = ""
 
