@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import SiEPIC, pya
+from SiEPIC import _globals, scripts
+
+#Get Context
+lv = pya.Application.instance().main_window().current_view()
+if lv == None:
+  raise Exception("No view selected")
+ly = lv.active_cellview().layout()
+if ly == None:
+  raise Exception("No active layout")
+cell = lv.active_cellview().cell
+if cell == None:
+  raise Exception("No active cell")
+  
+itr3 = cell.begin_shapes_rec(ly.layer(pya.LayerInfo(50,0)))
+while not itr3.at_end():
+  itr3.shape().delete()
+  itr3.next()</text>
+</klayout-macro>

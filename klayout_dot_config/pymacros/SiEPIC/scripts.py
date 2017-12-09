@@ -55,7 +55,7 @@ def waveguide_from_path(params = None, cell = None):
                                                                      "adiab": params['adiabatic'],
                                                                      "bezier": params['bezier'],
                                                                      "layers": [wg['layer'] for wg in params['wgs']] + [_globals.TECHNOLOGY['LayerDevRec']],
-                                                                     "widths": [wg['width'] for wg in params['wgs']] + [3*params['width']],
+                                                                     "widths": [wg['width'] for wg in params['wgs']] + [2*params['width']],
                                                                      "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
       selection.append(pya.ObjectInstPath())
       selection[-1].top = obj.top
@@ -107,10 +107,47 @@ def waveguide_to_path(cell = None):
   lv.commit()
   
 def waveguide_length():
-  print("waveguide_length")
+  from . import _globals
+  
+  lv = pya.Application.instance().main_window().current_view()
+  if lv == None:
+    raise Exception("No view selected")
+  
+  ly = pya.Application.instance().main_window().current_view().active_cellview().layout() 
+  if ly == None:
+    raise Exception("No active layout")
+    
+  selection = lv.object_selection
+  if len(selection) == 1 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name():
+    cell = selection[0].inst().cell
+    area = cell.each_shape(cell.layout().layer(_globals.TECHNOLOGY['LayerDevRec'])).__next__().polygon.area()
+    width = 3*cell.pcell_parameters_by_name()['width']/cell.layout().dbu
+    pya.MessageBox.warning("Waveguide Length", "Waveguide length (um): %s" % str(area/width*cell.layout().dbu), pya.MessageBox.Ok)
+  else:
+    pya.MessageBox.warning("Selection is not a waveguide", "Select one waveguide you wish to measure.", pya.MessageBox.Ok)
   
 def waveguide_length_diff():
-  print("waveguide_length_diff")
+  from . import _globals
+  
+  lv = pya.Application.instance().main_window().current_view()
+  if lv == None:
+    raise Exception("No view selected")
+  
+  ly = pya.Application.instance().main_window().current_view().active_cellview().layout() 
+  if ly == None:
+    raise Exception("No active layout")
+    
+  selection = lv.object_selection
+  if len(selection) == 2 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name() and selection[1].inst().is_pcell() and "Waveguide" in selection[1].inst().cell.basic_name():
+    cell = selection[0].inst().cell
+    area1 = cell.each_shape(cell.layout().layer(_globals.TECHNOLOGY['LayerDevRec'])).__next__().polygon.area()
+    width1 = 3*cell.pcell_parameters_by_name()['width']/cell.layout().dbu
+    cell = selection[1].inst().cell
+    area2 = cell.each_shape(cell.layout().layer(_globals.TECHNOLOGY['LayerDevRec'])).__next__().polygon.area()
+    width2 = 3*cell.pcell_parameters_by_name()['width']/cell.layout().dbu
+    pya.MessageBox.warning("Waveguide Length Difference", "Difference in waveguide lengths (um): %s" % str(abs(area1/width1 - area2/width2)*cell.layout().dbu), pya.MessageBox.Ok)
+  else:
+    pya.MessageBox.warning("Selection are not a waveguides", "Select two waveguides you wish to measure.", pya.MessageBox.Ok)
 
 def waveguide_heal():
   print("waveguide_heal")
@@ -120,6 +157,33 @@ def auto_route():
   
 def snap_component():
   print("snap_component")
+  
+def delete_top_cells():
+
+  def delete_cells(ly, cell):
+    if cell in ly.top_cells():
+      ly.delete_cells([tcell for tcell in ly.each_top_cell() if tcell != cell.cell_index()])
+    if len(ly.top_cells()) > 1:
+      delete_cells(ly, cell)
+    
+  lv = pya.Application.instance().main_window().current_view()
+  if lv == None:
+    raise Exception("No view selected")
+
+  ly = pya.Application.instance().main_window().current_view().active_cellview().layout() 
+  if ly == None:
+    raise Exception("No active layout")
+  
+  cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+  if cell == None:
+    raise Exception("No active cell")
+
+  if cell in ly.top_cells():
+    lv.transaction("Delete extra top cells")
+    delete_cells(ly, cell)
+    lv.commit()
+  else:
+    v = pya.MessageBox.warning("No top cell selected", "No top cell selected.\nPlease select a top cell to keep\n(not a sub-cell).", pya.MessageBox.Ok)
   
 def compute_area():
   print("compute_area")
@@ -152,9 +216,14 @@ def calibreDRC(params = None, cell = None):
       raise Exception("Missing information")
 
     lv.transaction("calibre drc")
-    progress = pya.RelativeProgress("Calibre DRC", 100)
-    progress.value = 0
-    pya.Application.instance().main_window().update()
+    
+    import time
+    progress = pya.RelativeProgress("Calibre DRC", 5)
+    progress.format = "Saving Layout to Temporary File"
+    progress.set(1, True)
+    time.sleep(1)
+    pya.Application.instance().main_window().repaint()
+    
     # Python version
     import sys, os, pipes, codecs
     if sys.platform.startswith('win'):
@@ -168,14 +237,12 @@ def calibreDRC(params = None, cell = None):
     
     results_file = os.path.basename(local_pathfile) + ".rve"
     results_pathfile = os.path.join(os.path.dirname(local_pathfile), results_file)
-    progress.format = "Saving temporary layout"
     tmp_ly = ly.dup()
     [cell.flatten(True) for cell in tmp_ly.each_cell()]
     opts = pya.SaveLayoutOptions()
     opts.format = "GDS2"
     tmp_ly.write(local_pathfile, opts)
-    progress.value = 25
-    pya.Application.instance().main_window().update()
+    
     with codecs.open(os.path.join(local_path, 'run_calibre'), 'w', encoding="utf-8") as file:
       cal_script  = '#!/bin/tcsh \n'
       cal_script += 'source %s \n' % params['calibre']
@@ -200,39 +267,57 @@ def calibreDRC(params = None, cell = None):
     version = sys.version
     if version.find("2.") > -1:
       import commands
-      pya.Application.instance().main_window().update()
-      progress.format = "Uploading layout and scripts"
+
+      progress.set(2, True)
+      progress.format = "Uploading Layout and Scripts"
+      pya.Application.instance().main_window().repaint()
+      
       out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s "%s" %s:%s' % (os.path.dirname(local_pathfile), params['port'], os.path.basename(local_pathfile), params['url'], remote_path))
       out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s %s %s:%s' % (local_path, params['port'], 'run_calibre', params['url'], remote_path))
       out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s %s %s:%s' % (local_path, params['port'], 'drc.cal', params['url'], remote_path))
-      progress.value = 50
-      progress.format = "Checking layout for errors"
-      pya.Application.instance().main_window().update()
+
+      progress.set(3, True)
+      progress.format = "Checking Layout for Errors"
+      pya.Application.instance().main_window().repaint()
+    
       out = cmd('ssh -i C:/Users/bpoul/.ssh/drc -p%s %s "%s"' % (params['port'], params['url'], "cd " + remote_path +" && source run_calibre"))
-      progress.value = 75
-      progress.format = "Downloading Errors"
-      pya.Application.instance().main_window().update()
+
+      progress.set(4, True)
+      progress.format = "Downloading Results"
+      pya.Application.instance().main_window().repaint()
+      
       out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s %s:%s %s' % (os.path.dirname(local_pathfile), params['port'], params['url'], remote_path + "/drc.rve", results_file))
-      progress.value = 100
-      pya.Application.instance().main_window().update()
+
+      progress.set(5, True)
+      progress.format = "Finishing"
+      pya.Application.instance().main_window().repaint()
+      
     elif version.find("3.") > -1:
       import subprocess
       cmd = subprocess.check_output
-      progress.format = "Uploading layout and scripts"
-      pya.Application.instance().main_window().update()
+
+      progress.format = "Uploading Layout and Scripts"      
+      progress.set(2, True)
+      pya.Application.instance().main_window().repaint()
+      
       out = cmd('cd "%s" && scp -i %s -P%s "%s" %s:%s' % (os.path.dirname(local_pathfile), params['identity'], params['port'], os.path.basename(local_pathfile), params['url'], remote_path), shell=True)
       out = cmd('cd "%s" && scp -i %s -P%s %s %s:%s' % (local_path, params['identity'], params['port'], 'run_calibre', params['url'], remote_path), shell=True)
       out = cmd('cd "%s" && scp -i %s -P%s %s %s:%s' % (local_path, params['identity'], params['port'], 'drc.cal', params['url'], remote_path), shell=True)
-      progress.value = 50
-      progress.format = "Checking layout for errors"
-      pya.Application.instance().main_window().update()
+
+      progress.format = "Checking Layout for Errors"
+      progress.set(3, True)
+      pya.Application.instance().main_window().repaint()
+
       out = cmd('ssh -i %s -p%s %s "%s"' % (params['identity'], params['port'], params['url'], "cd " + remote_path +" && source run_calibre"), shell=True)
-      progress.value = 75
-      progress.format = "Downloading Errors"
-      pya.Application.instance().main_window().update()
+      
+      progress.format = "Downloading Results"
+      progress.set(4, True)
+      pya.Application.instance().main_window().repaint()
+      
       out = cmd('cd "%s" && scp -i %s -P%s %s:%s %s' % (os.path.dirname(local_pathfile), params['identity'], params['port'], params['url'], remote_path + "/drc.rve", results_file), shell=True)
-      progress.value = 100
-      pya.Application.instance().main_window().update()
+
+      progress.format = "Finishing"
+      progress.set(5, True)
       
     progress._destroy()
     if os.path.exists(results_pathfile):
@@ -245,6 +330,7 @@ def calibreDRC(params = None, cell = None):
     else:
       pya.MessageBox.warning("Errors", "Something failed during the server Calibre DRC check.",  pya.MessageBox.Ok)
 
+    pya.Application.instance().main_window().update()
     lv.commit()
     
 def auto_coord_extract():
@@ -299,7 +385,42 @@ def auto_coord_extract():
   cell = pya.Application.instance().main_window().current_view().active_cellview().cell
   t = find_automated_measurement_labels(cell, cell.layout().layer(_globals.TECHNOLOGY['LayerText']))
   wtext.insertHtml (t)
+
+def calculate_area():
+  from . import _globals
+
+  lv = pya.Application.instance().main_window().current_view()
+  if lv == None:
+    raise Exception("No view selected")
+  ly = lv.active_cellview().layout()
+  if ly == None:
+    raise Exception("No active layout")
+  cell = lv.active_cellview().cell
+  if cell == None:
+    raise Exception("No active cell")
+    
+  total = cell.each_shape(ly.layer(_globals.TECHNOLOGY['LayerFloorPlan'])).__next__().polygon.area()
+  area = 0
+  itr = cell.begin_shapes_rec(ly.layer(_globals.TECHNOLOGY['LayerSi']))
+  while not itr.at_end():
+    area += itr.shape().area()
+    itr.next()
+  print(area/total)
   
+  area = 0
+  itr = cell.begin_shapes_rec(ly.layer(_globals.TECHNOLOGY['LayerSiEtch1']))
+  while not itr.at_end():
+    area += itr.shape().area()
+    itr.next()
+  print(area/total)
+  
+  area = 0
+  itr = cell.begin_shapes_rec(ly.layer(_globals.TECHNOLOGY['LayerSiEtch2']))
+  while not itr.at_end():
+    area += itr.shape().area()
+    itr.next()
+  print(area/total)
+
 def layout_check():
   print("layout_check")
   

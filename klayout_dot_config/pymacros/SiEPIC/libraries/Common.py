@@ -55,13 +55,16 @@ class Waveguide(pya.PCellDeclarationHelper):
 
       width = float(self.widths[i])/dbu
       offset = float(self.offsets[i])/dbu
-      radius = self.radius/dbu - offset
+      #radius = self.radius/dbu + offset
       
       tpath = path.translate_from_center(offset)
       
       pts = tpath.get_points()
       wg_pts = [pts[0]]
       for i in range(1,len(pts)-1):
+        turn = ((angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90)/90
+        radius = (self.radius/dbu + offset) if turn > 0 else (self.radius/dbu - offset)
+
         pt_radius = radius
         dis = pts[i-1].distance(pts[i])
         if (dis < pt_radius):
@@ -69,13 +72,13 @@ class Waveguide(pya.PCellDeclarationHelper):
         dis = pts[i].distance(pts[i+1])
         if (dis  < pt_radius):
           pt_radius = dis if i==len(pts)-2 else dis/2
+
         if(self.adiab):
           arc_pts = [pya.Point(-pt_radius, pt_radius) + pt for pt in arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), self.bezier)]
         else:
           arc_pts = [pya.Point(-pt_radius, pt_radius) + pt for pt in arc(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]))]
-
-        turn = ((angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90)/90
         angle = angle_vector(pts[i]-pts[i-1])/90
+        
         wg_pts += pya.Path(arc_pts, width).transformed(pya.Trans(angle, turn < 0, pts[i])).get_points()
 
       wg_pts.append(pts[-1])
@@ -90,7 +93,7 @@ class Waveguide(pya.PCellDeclarationHelper):
     
     t = pya.Trans(angle_vector(pts[-1]-pts[-2])/90, False, pts[-1])
     self.cell.shapes(LayerPinRecN).insert(pya.Path([pya.Point(-100, 0), pya.Point(100, 0)], self.width/dbu).transformed(t))
-    self.cell.shapes(LayerPinRecN).insert(pya.Text("pin2", t)).text_size = 0.4/dbul
+    self.cell.shapes(LayerPinRecN).insert(pya.Text("pin2", t)).text_size = 0.4/dbu
 
     self.cell.shapes(self.layout.guiding_shape_layer()).insert(pya.Path(path.get_points(), path.width))
     

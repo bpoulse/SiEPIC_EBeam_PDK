@@ -20,6 +20,12 @@ def load_technology():
         except Exception as e:
          print(e)
 
+      if not any('Sabarinathan' in library for library in pya.Library.library_names()):
+        try:
+          getattr(import_module('.libraries.Sabarinathan', 'SiEPIC'), 'Sabarinathan')()
+        except Exception as e:
+         print(e)
+
       if not any('Test' in library for library in pya.Library.library_names()):
         try:
           getattr(import_module('.libraries.Test', 'SiEPIC'), 'Test')()

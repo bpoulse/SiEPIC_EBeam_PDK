@@ -19,26 +19,27 @@ from SiEPIC import _globals, scripts
 
 dbu = _globals.TECHNOLOGY['dbu']
 size = pya.Point(2500/dbu, 1000/dbu)
+unit_spacing = pya.Point(167.0/dbu, 95.0/dbu)
+interlock_spacing = pya.Point(79.5/dbu, 17.0/dbu)
 
 designs = [{
-  'radii': [0.140, 0.150, 0.160],
-  'center': [2.0],
-  'edge': [(round(0.84*0.45, 3), 0.275),
-           (round(0.85*0.45, 3), 0.275),
-           (round(0.86*0.45, 3), 0.275),
-           (round(0.87*0.45, 3), 0.275),
-           (round(0.88*0.45, 3), 0.275),
-           (round(0.89*0.45, 3), 0.275),
-           (round(0.90*0.45, 3), 0.275),
-           (round(0.91*0.45, 3), 0.275),
-           (round(0.92*0.45, 3), 0.275),
-           (round(0.93*0.45, 3), 0.275),
-           (round(0.94*0.45, 3), 0.275),
-           (round(0.95*0.45, 3), 0.275),
-           (round(0.96*0.45, 3), 0.275)],
-  'gap': [0.2, 0.25, 0.3, 0.35, 0.4]
+  'radii': [0.345/2, 0.355/2, 0.365/2],
+  'center': [1.0],
+  'edge': [(round(0.78*0.45, 3), 0.289 + 0.006),
+           (round(0.78*0.45, 3), 0.289 + 0.011),
+  
+           (round(0.80*0.45, 3), 0.295 + 0.006),
+           (round(0.80*0.45, 3), 0.295 + 0.011),
+           
+           (round(0.85*0.45, 3), 0.309 + 0.006),
+           (round(0.85*0.45, 3), 0.309 + 0.011),
+           
+           (round(0.90*0.45, 3), 0.322 + 0.006),
+           (round(0.90*0.45, 3), 0.322 + 0.011)],
+  'gap': [0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
 }]
 
+#Get Context
 lv = pya.Application.instance().main_window().current_view()
 if lv == None:
   raise Exception("No view selected")
@@ -49,140 +50,234 @@ cell = lv.active_cellview().cell
 if cell == None:
   raise Exception("No active cell")
 
-ly.prune_subcells(cell.cell_index(), 10)
+#Clean Up
+ly.prune_subcells(cell.cell_index(), 100)
 cell.clear_shapes()
 
+#Set Floor Plan
 layer = ly.layer(_globals.TECHNOLOGY['LayerFloorPlan'])
 cell.shapes(layer).insert(pya.Box(0, 0, size.x, size.y))
 
-testcell =ly.create_cell("Photonic Crystal", "SiEPIC Test Structure Library", {"type": 1, "radius_b": 0.10, "radius_e": 0.2, "n": 10, "layer": _globals.TECHNOLOGY['LayerSi']})
+#Add Square PC Test Cells
+testcell =ly.create_cell("Photonic Crystal", "SiEPIC Test Structure Library", {"lattice": 0.6, "type": 0, "radius_b": 0.05, "radius_e": 0.55/2, "n": 8, "layer": _globals.TECHNOLOGY['LayerSi']})
+toffset = size.y - testcell.bbox().height() - 43.0/dbu
+cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(size.x - testcell.bbox().width() - 1.0/dbu, toffset)))
 
-cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(1.0/dbu, 1.0/dbu)))
-cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(size.x - testcell.bbox().width() - 1.0/dbu, size.y - testcell.bbox().height() - 1.0/dbu)))
+testcell =ly.create_cell("Photonic Crystal", "SiEPIC Test Structure Library", {"lattice": 0.5, "type": 0, "radius_b": 0.05, "radius_e": 0.45/2, "n": 8, "layer": _globals.TECHNOLOGY['LayerSi']})
+toffset -= testcell.bbox().height()
+cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(size.x - testcell.bbox().width() - 1.0/dbu, toffset)))
 
-gcell = ly.create_cell("Grating Coupler 13deg TE 1550 Oxide", "SiEPIC GSiP Library")
-tcell = ly.create_cell("Terminator TE 1550", "SiEPIC GSiP Library")
-tcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerDRCexclude'])).insert(pya.Box(-10.05/dbu, -0.3/dbu, -5.0/dbu, 0.3/dbu))
-pt = pya.Point(1.0/dbu, 1.0/dbu)
-pt2 = gcell.find_pin('pin1').center + pya.Point(127/dbu/2, 0)
-spacing = pya.Point(4.0/dbu, -3.5/dbu)
+testcell =ly.create_cell("Photonic Crystal", "SiEPIC Test Structure Library", {"lattice": 0.4, "type": 0, "radius_b": 0.05, "radius_e": 0.35/2, "n": 9, "layer": _globals.TECHNOLOGY['LayerSi']})
+toffset -= testcell.bbox().height()
+cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(size.x - testcell.bbox().width() - 1.0/dbu, toffset)))
+
+testcell =ly.create_cell("Photonic Crystal", "SiEPIC Test Structure Library", {"lattice": 0.3, "type": 0, "radius_b": 0.05, "radius_e": 0.25/2, "n": 9, "layer": _globals.TECHNOLOGY['LayerSi']})
+toffset -= testcell.bbox().height()
+cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(size.x - testcell.bbox().width() - 1.0/dbu, toffset)))
+
+#Add Hexagonal PC Test Cells
+testcell =ly.create_cell("Photonic Crystal", "SiEPIC Test Structure Library", {"lattice": 0.6, "type": 1, "radius_b": 0.05, "radius_e": 0.55/2, "n": 8, "layer": _globals.TECHNOLOGY['LayerSi']})
+toffset = size.y - testcell.bbox().height() - 43.0/dbu
+cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(size.x - testcell.bbox().width() - 100.0/dbu, toffset)))
+
+testcell =ly.create_cell("Photonic Crystal", "SiEPIC Test Structure Library", {"lattice": 0.5, "type": 1, "radius_b": 0.05, "radius_e": 0.45/2, "n": 8, "layer": _globals.TECHNOLOGY['LayerSi']})
+toffset -= testcell.bbox().height()
+cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(size.x - testcell.bbox().width() - 100.0/dbu, toffset)))
+
+testcell =ly.create_cell("Photonic Crystal", "SiEPIC Test Structure Library", {"lattice": 0.4, "type": 1, "radius_b": 0.05, "radius_e": 0.35/2, "n": 9, "layer": _globals.TECHNOLOGY['LayerSi']})
+toffset -= testcell.bbox().height()
+cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(size.x - testcell.bbox().width() - 100.0/dbu, toffset)))
+
+testcell =ly.create_cell("Photonic Crystal", "SiEPIC Test Structure Library", {"lattice": 0.3, "type": 1, "radius_b": 0.05, "radius_e": 0.25/2, "n": 9, "layer": _globals.TECHNOLOGY['LayerSi']})
+toffset -= testcell.bbox().height()
+cell.insert(pya.CellInstArray(testcell.cell_index(), pya.Trans(size.x - testcell.bbox().width() - 100.0/dbu, toffset)))
+
+#Grating Coupler
+gcell = ly.create_cell("Grating Coupler 13deg TE 1550 Oxide Ridge", "Sabarinathan Lab Library")
+
+#Radiation Coupler
+tcell = ly.create_cell("Terminator")
+
+#Add Anchors and DRC exclusion
+tcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Polygon([pya.Point(-20.0/dbu, -2.5/dbu), pya.Point(-20.0/dbu, -15.6/dbu), pya.Point(42.0/dbu, -15.6/dbu), pya.Point(42.0/dbu, -2.5/dbu)]))
+tcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Polygon([pya.Point(-20.0/dbu, -15.0/dbu), pya.Point(-20.0/dbu, 15.0/dbu), pya.Point(-5.0/dbu, 15.0/dbu), pya.Point(-5.0/dbu, -15.0/dbu)]))
+tcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Polygon([pya.Point(-5.0/dbu, 1.75/dbu), pya.Point(0/dbu, 0.225/dbu), pya.Point(0/dbu, -0.225/dbu), pya.Point(-5.0/dbu, -1.75/dbu)]))
+
+tcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Polygon([pya.Point(-5.0/dbu, 5.0/dbu/2), pya.Point(0/dbu, 5.0/dbu/2), pya.Point(0/dbu, 10.0/dbu), pya.Point(-5.0/dbu, 10.0/dbu)]))
+
+tcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSiEtch2'])).insert(pya.Polygon([pya.Point(-5.2/dbu, 5.4/dbu/2), pya.Point(0/dbu, 5.4/dbu/2), pya.Point(0/dbu, -5.4/dbu/2), pya.Point(-5.2/dbu, -5.4/dbu/2)]))
+tcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSiEtch2'])).insert(pya.Polygon([pya.Point(-5.2/dbu, 5.4/dbu/2), pya.Point(0/dbu, 5.4/dbu/2), pya.Point(0/dbu, -5.4/dbu/2), pya.Point(-5.2/dbu, -5.4/dbu/2)]))
+start_pt = pya.Point(1.0/dbu, 1.0/dbu)
+
+#Waveguide Parameters
 params = {
-  'radius': 5.0,
-  'width': 0.5,
+  'radius': 15.0,
+  'width': 4.45,
   'adiabatic': False,
   'bezier': 0.45,
   'wgs':[{
     'layer': _globals.TECHNOLOGY['LayerSi'], 
-    'width': 0.5,
+    'width': 0.45,
     'offset': 0
+  },{
+    'layer': _globals.TECHNOLOGY['LayerSiEtch2'], 
+    'width': 4.65,
+    'offset': 0
+  },{
+    'layer': _globals.TECHNOLOGY['LayerSi'], 
+    'width': 6.0,
+    'offset': 5.225
+  },{
+    'layer': _globals.TECHNOLOGY['LayerSi'], 
+    'width': 6.0,
+    'offset': -5.225
   }]
 }
 
 count = 0
-blank_count = 0
+bnk_count = 0
 for i in range(0, len(designs)):
   for j in range(0, len(designs[i]['radii'])):
     for k in range(0, len(designs[i]['edge'])):
       for l in range(0, len(designs[i]['center'])):
         for m in range(0, len(designs[i]['gap'])):
-          unit_cell = ly.create_cell("PCHR_" + str(i) + "_r" + str(designs[i]['radii'][j]) + "_e" + str(designs[i]['edge'][k][0]) + "_c" + str(designs[i]['center'][l]) + "_g" + str(designs[i]['gap'][m]))
-          pcell = ly.create_cell("Photonic Crystal Hexagonal Ring Resonator", "SiEPIC GSiP Library", {"r_h": designs[i]['radii'][j],
-                                                                                                      "m": designs[i]['edge'][k][0],
-                                                                                                      "c_w": designs[i]['edge'][k][1],
-                                                                                                      "r_s": designs[i]['center'][l],
-                                                                                                      "g": designs[i]['gap'][m]})
-          pt1 = pya.Point(0, 5.5/dbu - pcell.find_pin('pin4').center.y)
-          unit_cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pt1)))
           
-          unit_cell.insert(pya.CellInstArray(gcell.cell_index(), pya.Trans(1, False, 127/2/dbu, 0)))
+          unit_cell = ly.create_cell("PCHR_" + "_r" + str(designs[i]['radii'][j]) + "_e" + str(designs[i]['edge'][k][0]) + "_w" + str(designs[i]['edge'][k][1]) + "_c" + str(designs[i]['center'][l]) + "_g" + str(designs[i]['gap'][m]))
+          pcell = ly.create_cell("Photonic Crystal Hexagonal Ring Resonator", "Sabarinathan Lab Library", {"r_h": designs[i]['radii'][j],
+                                                                                                           "m": designs[i]['edge'][k][0],
+                                                                                                           "c_w": designs[i]['edge'][k][1],
+                                                                                                           "r_s": designs[i]['center'][l],
+                                                                                                           "g": designs[i]['gap'][m]})
+                                                                                                        
+          grating_pt1 = gcell.find_pin('pin1').center + pya.Point(gcell.bbox().width()/2, gcell.bbox().height())
+          grating_pt2 = grating_pt1 + pya.Point(127.0/dbu, 0)
           
-          pt3 = pcell.find_pin('pin2').center + pt1
-          pt4 = pcell.find_pin('pin3').center + pt1
+          ring_pt_offset = grating_pt1 + pya.Point(127.0/dbu/2+20.0/dbu, -30.0/dbu)
+                    
+          ring_pt1 = pcell.find_pin('pin1').center
+          ring_pt1 = pya.Point(ring_pt1.y, ring_pt1.x) + ring_pt_offset
           
-          unit_cell.insert(pya.CellInstArray(gcell.cell_index(), pya.Trans(1, False, -127/2/dbu, 0)))
-          unit_cell.shapes(unit_cell.layout().layer(_globals.TECHNOLOGY['LayerText'])).insert(pya.Text ("opt_in_TE_1550_" + unit_cell.basic_name(), pya.Trans(1, False, -127/2/dbu, 0)))
+          ring_pt2 = pcell.find_pin('pin2').center
+          ring_pt2 = pya.Point(ring_pt2.y, ring_pt2.x) + ring_pt_offset
           
-          unit_cell.insert(pya.CellInstArray(tcell.cell_index(), pya.Trans(2, False, pya.Point(pcell.find_pin('pin4').center.x, 5.5/dbu))))
-          unit_cell.insert(pya.CellInstArray(tcell.cell_index(), pya.Trans(0, False,  pya.Point(0, 5.5/dbu - pcell.find_pin('pin4').center.y) + pcell.find_pin('pin1').center)))
+          ring_pt3 = pcell.find_pin('pin3').center
+          ring_pt3 = pya.Point(ring_pt3.y, ring_pt3.x) + ring_pt_offset
+          
+          ring_pt4 = pcell.find_pin('pin4').center
+          ring_pt4 = pya.Point(ring_pt4.y, ring_pt4.x) + ring_pt_offset
+          
+          
+          unit_cell.insert(pya.CellInstArray(gcell.cell_index(), pya.Trans(0, False, grating_pt1)))
+          unit_cell.insert(pya.CellInstArray(gcell.cell_index(), pya.Trans(0, False, grating_pt2)))
+          
+          unit_cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(1, False, ring_pt_offset)))
+          
+          unit_cell.insert(pya.CellInstArray(tcell.cell_index(), pya.Trans(1, False, ring_pt1)))
+          unit_cell.insert(pya.CellInstArray(tcell.cell_index(), pya.Trans(1, True, ring_pt3)))
 
-          textcell = ly.create_cell("TEXT", "Basic", {"text": chr(65+j) + chr(65+m) + chr(65+k), 
-                                                      "layer": _globals.TECHNOLOGY['LayerSi'], 
-                                                      "mag": 5,
-                                                      "cspacing": 2.0,
-                                                      "inverse": True })
-          unit_cell.insert(pya.CellInstArray(textcell.cell_index(), pya.Trans(pya.Trans.R0, -13.5/2/dbu, -6.0/dbu)))
-          
-          unit_cell.shapes(unit_cell.layout().layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Path([pt2, pya.Point(pt2.x, pt3.y), pt3], 0.5/_globals.TECHNOLOGY['dbu']))
-          unit_cell.shapes(unit_cell.layout().layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Path([pya.Point(-pt2.x, pt2.y), pya.Point(-pt2.x, pt4.y), pt4], 0.5/_globals.TECHNOLOGY['dbu']))
+          unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Path([grating_pt1, pya.Point(grating_pt1.x, grating_pt1.y+25.0/dbu), pya.Point(ring_pt4.x, grating_pt1.y+25.0/dbu), ring_pt4], 0.5/dbu))
+          unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Path([grating_pt2, pya.Point(grating_pt2.x, grating_pt2.y+25.0/dbu), pya.Point(ring_pt2.x, grating_pt2.y+25.0/dbu), ring_pt2], 0.5/dbu))
+
           lv.clear_object_selection()
           scripts.waveguide_from_path(params, unit_cell)
           lv.clear_object_selection()
           box = unit_cell.bbox()
           
-          if count == 0 or count == 28 or count == 270:
+          unit_cell.shapes(unit_cell.layout().layer(_globals.TECHNOLOGY['LayerText'])).insert(pya.Text ("opt_in_TE_1550_" + unit_cell.basic_name(), pya.Trans(0, False, grating_pt1)))
+          tmptextcell = ly.create_cell("TEXT", "Basic", {"text": chr(65+j) + chr(65+k) + chr(65+k%2) + chr(65+l) + chr(65+m), 
+                                                      "layer": _globals.TECHNOLOGY['LayerSi'], 
+                                                      "mag": 5})
+                                                      
+          textpoly = pya.Polygon([pya.Point(-4.0/dbu, -11.207/dbu), pya.Point(-4.0/dbu, 4.5/dbu+4.5/dbu), pya.Point(4.5/dbu+14.5/dbu, 4.5/dbu+4.5/dbu), pya.Point(4.5/dbu+14.5/dbu, -11.207/dbu)])          
+          itr = tmptextcell.begin_shapes_rec(ly.layer(_globals.TECHNOLOGY['LayerSi']))
+          while not itr.at_end():
+            textpoly.insert_hole(itr.shape().polygon.get_points())
+            itr.next()
+
+          textcell = ly.create_cell("Label_" + chr(65+j) + chr(65+k) + chr(65+k%2) + chr(65+l) + chr(65+m))
+          textcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(textpoly.transformed(pya.Trans(ring_pt_offset)))
+          textcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSiEtch2'])).insert(pya.Box(-0.2/dbu, -0.2/dbu, 14.7/dbu, 3.7/dbu).transformed(pya.Trans(ring_pt_offset)))
+          tmptextcell.delete()
+          unit_cell.insert(pya.CellInstArray(textcell.cell_index(), pya.Trans(0, pya.Point(18.5/dbu, 38.0/dbu))))
           
-            blank_cell = ly.create_cell("PCHR_000");
-            blank_cell.insert(pya.CellInstArray(gcell.cell_index(), pya.Trans(1, False, 127/2/dbu, 0)))
-            blank_cell.insert(pya.CellInstArray(gcell.cell_index(), pya.Trans(1, False, -127/2/dbu, 0)))
-                      
-            pt2 = gcell.find_pin('pin1').center + pya.Point(127/dbu/2, 0)
-            blank_cell.shapes(unit_cell.layout().layer(_globals.TECHNOLOGY['LayerText'])).insert(pya.Text ("opt_in_TE_1550_" + unit_cell.basic_name(), pya.Trans(1, False, -127/2/dbu, 0)))
-            
-            
-            textcell = ly.create_cell("TEXT", "Basic", {"text": 'XXX', 
-                                                        "layer": _globals.TECHNOLOGY['LayerSi'], 
-                                                        "mag": 5,
-                                                        "cspacing": 2.0,
-                                                        "inverse": True })
-            blank_cell.insert(pya.CellInstArray(textcell.cell_index(), pya.Trans(pya.Trans.R0, -13.5/2/dbu, -6.0/dbu)))
-            
-            blank_cell.shapes(blank_cell.layout().layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Path([pt2, pya.Point(pt2.x, (pt3.y + pt4.y)/2), pya.Point(-pt2.x, (pt3.y + pt4.y)/2),pya.Point(-pt2.x, pt2.y)], 0.5/_globals.TECHNOLOGY['dbu']))
-            lv.clear_object_selection()
-            scripts.waveguide_from_path(params, blank_cell)
-            lv.clear_object_selection()
-            
-            blank_cell.name = "PCHR_00" + str(blank_count)
-            if count%2 == 0:
-              cell.insert(pya.CellInstArray(blank_cell.cell_index(), pya.Trans(pt - pya.Point(box.left, box.bottom) + pya.Point(0, box.height()*0.55))))
-            else:
-              cell.insert(pya.CellInstArray(blank_cell.cell_index(), pya.Trans(0, True, pt - pya.Point(box.left, -box.top))))
-            
-            count += 1
-            blank_count += 1
-            
-            pt.x += (box.width() + spacing.x)*0.5
-            if ((pt - pya.Point(box.left, -box.top)).x + box.width()*0.5) &gt; (size.x-1.0/dbu):
-              pt.x = 1.0/dbu
-              pt.y += box.height()*1.5 + spacing.y
-              if pt.y &gt; (size.y-1.0/dbu):
-                raise Exception("There is not enough space to accomodate all design parameters")
-            
-            blank_cell.name = "PCHR_00" + str(blank_count)
-            if count%2 == 0:
-              cell.insert(pya.CellInstArray(blank_cell.cell_index(), pya.Trans(pt - pya.Point(box.left, box.bottom) + pya.Point(0, box.height()*0.55))))
-            else:
-              cell.insert(pya.CellInstArray(blank_cell.cell_index(), pya.Trans(0, True, pt - pya.Point(box.left, -box.top))))
+          unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(ring_pt2.x - 3.0/dbu, ring_pt2.y), pya.Point(ring_pt4.x + 3.0/dbu, ring_pt4.y + 40.0/dbu)))
+          unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(ring_pt2.x + 5.0/dbu, ring_pt2.y + 40.0/dbu), pya.Point(ring_pt4.x - 5.0/dbu, ring_pt4.y + 47.0/dbu)))
+          unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(ring_pt2.x + 6.0/dbu, ring_pt2.y + 46.0/dbu), pya.Point(ring_pt4.x - 6.0/dbu, ring_pt4.y + 47.0/dbu)))
+          
+          if count in [0, 18, 20*9]:
+            for o in range(0, 2):
+              blank_cell = ly.create_cell("PCHR_XXXX_" + str(bnk_count))
+              blank_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Path([grating_pt1, pya.Point(grating_pt1.x, grating_pt1.y + 25.0/dbu), pya.Point(grating_pt2.x, grating_pt2.y + 25.0/dbu), grating_pt2], 0.5/dbu))
+              blank_cell.insert(pya.CellInstArray(gcell.cell_index(), pya.Trans(0, False, grating_pt1)))
+              blank_cell.insert(pya.CellInstArray(gcell.cell_index(), pya.Trans(0, False, grating_pt2)))
               
-            count += 1
-            blank_count += 1
-            
-            pt.x += (box.width() + spacing.x)*0.5
-            if ((pt - pya.Point(box.left, -box.top)).x + box.width()*0.5) &gt; (size.x-1.0/dbu):
-              pt.x = 1.0/dbu
-              pt.y += box.height()*1.5 + spacing.y
-              if pt.y &gt; (size.y-1.0/dbu):
-                raise Exception("There is not enough space to accomodate all design parameters")
-          
-          if count%2 == 0:
-            cell.insert(pya.CellInstArray(unit_cell.cell_index(), pya.Trans(pt - pya.Point(box.left, box.bottom) + pya.Point(0, box.height()*0.55))))
+              lv.clear_object_selection()
+              scripts.waveguide_from_path(params, blank_cell)
+              lv.clear_object_selection()
+              box = unit_cell.bbox()
+              
+              blank_cell.shapes(unit_cell.layout().layer(_globals.TECHNOLOGY['LayerText'])).insert(pya.Text ("opt_in_TE_1550_" + unit_cell.basic_name(), pya.Trans(0, False, grating_pt1)))
+              tmptextcell = ly.create_cell("TEXT", "Basic", {"text": 'XXXXX', 
+                                                          "layer": _globals.TECHNOLOGY['LayerSi'], 
+                                                          "mag": 5})
+                                                          
+              textpoly = pya.Polygon([pya.Point(-4.0/dbu, -11.207/dbu), pya.Point(-4.0/dbu, 4.5/dbu+4.5/dbu), pya.Point(4.5/dbu+14.5/dbu, 4.5/dbu+4.5/dbu), pya.Point(4.5/dbu+14.5/dbu, -11.207/dbu)])          
+              itr = tmptextcell.begin_shapes_rec(ly.layer(_globals.TECHNOLOGY['LayerSi']))
+              while not itr.at_end():
+                textpoly.insert_hole(itr.shape().polygon.get_points())
+                itr.next()
+    
+              textcell = ly.create_cell("Label_XXXXX")
+              textcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(textpoly.transformed(pya.Trans(ring_pt_offset)))
+              textcell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSiEtch2'])).insert(pya.Box(-0.2/dbu, -0.2/dbu, 14.7/dbu, 3.7/dbu).transformed(pya.Trans(ring_pt_offset)))
+              tmptextcell.delete()
+              blank_cell.insert(pya.CellInstArray(textcell.cell_index(), pya.Trans(0, pya.Point(20/dbu, 38.0/dbu))))
+                        
+              if count%2 == 1:
+                blank_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x-15.0/dbu, grating_pt1.y + 23.35/dbu), pya.Point(grating_pt1.x +4.0/dbu, grating_pt1.y + 30.75/dbu)))
+                blank_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x, grating_pt1.y + 30.0/dbu), pya.Point(grating_pt1.x + 5.0/dbu, grating_pt1.y + 30.75/dbu)))
+                blank_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x-15.0/dbu, grating_pt1.y), pya.Point(grating_pt1.x - 4.0/dbu, grating_pt1.y + 25.0/dbu)))
+                if not count &gt; 20*9:
+                  blank_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x-15.0/dbu, grating_pt1.y + 23.35/dbu), pya.Point(grating_pt1.x +4.0/dbu, grating_pt1.y + 30.75/dbu)).transformed(pya.Trans(61.0/dbu, 8.5/dbu)))
+                  blank_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x-15.0/dbu, grating_pt1.y), pya.Point(grating_pt1.x - 4.0/dbu, grating_pt1.y + 25.0/dbu)).transformed(pya.Trans(67.0/dbu, 36.8/dbu)))
+                cell.insert(pya.CellInstArray(blank_cell.cell_index(), pya.Trans(start_pt + pya.Point(0, interlock_spacing.y))))
+              else:
+                cell.insert(pya.CellInstArray(blank_cell.cell_index(), pya.Trans(2, False, start_pt + pya.Point(box.width(), 84.0/dbu))))
+              count += 1
+              bnk_count += 1
+              start_pt.x += (unit_spacing.x if count%2 == 0 else interlock_spacing.x)
+              if (start_pt.x + unit_spacing.x) &gt; (size.x - 1.0/dbu):
+                start_pt.x = 1.0/dbu
+                start_pt.y += unit_spacing.y
+                if (start_pt.y + unit_spacing.y) &gt; (size.y - 1.0/dbu):
+                  raise Exception("There is not enough space to accomodate all design parameters")
+                                     
+          if count%2 == 1:
+            unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x-15.0/dbu, grating_pt1.y + 23.35/dbu), pya.Point(grating_pt1.x +4.0/dbu, grating_pt1.y + 30.75/dbu)))
+            unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x, grating_pt1.y + 30.0/dbu), pya.Point(grating_pt1.x + 5.0/dbu, grating_pt1.y + 30.75/dbu)))
+            unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x-15.0/dbu, grating_pt1.y), pya.Point(grating_pt1.x - 4.0/dbu, grating_pt1.y + 25.0/dbu)))
+            if not count &gt; 20*9:
+              unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x-15.0/dbu, grating_pt1.y + 23.35/dbu), pya.Point(grating_pt1.x +4.0/dbu, grating_pt1.y + 30.75/dbu)).transformed(pya.Trans(61.0/dbu, 8.5/dbu)))
+              unit_cell.shapes(ly.layer(_globals.TECHNOLOGY['LayerSi'])).insert(pya.Box(pya.Point(grating_pt1.x-15.0/dbu, grating_pt1.y), pya.Point(grating_pt1.x - 4.0/dbu, grating_pt1.y + 25.0/dbu)).transformed(pya.Trans(67.0/dbu, 36.8/dbu)))
+            cell.insert(pya.CellInstArray(unit_cell.cell_index(), pya.Trans(start_pt + pya.Point(0, interlock_spacing.y))))
           else:
-            cell.insert(pya.CellInstArray(unit_cell.cell_index(), pya.Trans(0, True, pt - pya.Point(box.left, -box.top))))
-          
+            cell.insert(pya.CellInstArray(unit_cell.cell_index(), pya.Trans(2, False, start_pt + pya.Point(box.width(), 84.0/dbu))))
           count += 1
-          pt.x += (box.width() + spacing.x)*0.5
-          if ((pt - pya.Point(box.left, -box.top)).x + box.width()*0.5) &gt; (size.x-1.0/dbu):
-            pt.x = 1.0/dbu
-            pt.y += box.height()*1.5 + spacing.y
-            if pt.y &gt; (size.y-1.0/dbu):
-              raise Exception("There is not enough space to accomodate all design parameters")</text>
+          
+          start_pt.x += (unit_spacing.x if count%2 == 0 else interlock_spacing.x)
+          if (start_pt.x + unit_spacing.x) &gt; (size.x - 1.0/dbu):
+            start_pt.x = 1.0/dbu
+            start_pt.y += unit_spacing.y
+            if (start_pt.y + unit_spacing.y) &gt; (size.y - 1.0/dbu):
+              raise Exception("There is not enough space to accomodate all design parameters")
+              
+itr = cell.begin_shapes_rec(ly.layer(_globals.TECHNOLOGY['LayerDevRec']))
+while not itr.at_end():
+  itr.shape().delete()
+  itr.next()
+  
+itr = cell.begin_shapes_rec(ly.layer(_globals.TECHNOLOGY['LayerPinRec']))
+while not itr.at_end():
+  itr.shape().delete()
+  itr.next()</text>
 </klayout-macro>

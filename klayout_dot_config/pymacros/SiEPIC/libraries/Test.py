@@ -34,7 +34,7 @@ class Photonic_Crystal(pya.PCellDeclarationHelper):
     r_e = self.radius_e/dbu
     n = self.n
     
-    spacing = 1.0/dbu
+    spacing = 3.0/dbu
     height = (a*(v_s-1) + 2*spacing) if self.type == 0 else (a*(v_s-1)*cos(a_r) + 2*spacing)
     width = (a*(h_s-1) + 2*spacing) if self.type == 0 else (a*(h_s-0.5) + 2*spacing)
     

@@ -1,70 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<klayout-macro>
- <description/>
- <version/>
- <category>pymacros</category>
- <prolog/>
- <epilog/>
- <doc/>
- <autorun>false</autorun>
- <autorun-early>false</autorun-early>
- <shortcut/>
- <show-in-menu>false</show-in-menu>
- <group-name/>
- <menu-path/>
- <interpreter>python</interpreter>
- <dsl-interpreter-name/>
- <text>import SiEPIC, pya
-
-'''
-#################################################################################
-
-This file is useful to use when debugging code. Breakpoints do not get registered
-from within the module. To test code, define it in this file and import all modules 
-explicitly. The changes will persist as modules are Singleton-like (only imported once).
-
-Run to redefine functions/class methods
-
-#################################################################################
-
-Example 1:
-
-def arc_test():
-  return [pya.Point(0,0)]
-
-from SiEPIC import utils
-utils.arc = arc_test
-
-*run macro*
-*continue using Klayout as normal*
-
-#################################################F################################
-
-Example 2:
-
-from SiEPIC import _globals
-_globals.TECHNOLOGY = _globals.TECHNOLOGY['GSiP']
-
-*run macro*
-*continue using Klayout as normal*
-
-#################################################################################
-'''
-from SiEPIC import _globals, utils
-
-#Create an arc spanning from start to stop in degrees
-def arc(radius, start, stop):
-  from math import pi, cos, sin
-  from SiEPIC.utils import points_per_circle
-  start = start*pi/180
-  stop = stop*pi/180
-
-  da = 2*pi/points_per_circle(radius)*2
-  n = int(abs(stop-start)/da)
-  if n == 0: n = 1
-  return [pya.Point.from_dpoint(pya.DPoint(radius*cos(start+i*da), radius*sin(start+i*da))) for i in range(0, n+1) ]
-
-utils.arc = arc
+import pya
+from .. import _globals
 
 class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
   def __init__(self):
@@ -95,7 +30,7 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
     return False
 
   def produce_impl(self):
-    from SiEPIC.utils import arc, points_per_circle
+    from ..utils import arc, points_per_circle
     from math import pi, cos, sin, tan, log, sqrt, ceil
     # fetch the parameters
     dbu = self.layout.dbu
@@ -141,24 +76,21 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
                         pya.Point(a/2,round(-a/2*tan(a_r),0))])
 
     # Create Photonic Crystal
-    drc_region = pya.Region()
     for i in range(0,ceil(n/2)):
       for j in range(0, n-i):
         x = -a*(n-1)/2 + j*a + i*a/2
         y = i*a*cos(a_r)
-        if(sqrt(x*x+y*y)&gt;(r_s+e)):
+        if(sqrt(x*x+y*y)>(r_s+e)):
           if(i==0):
             hole = pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, 0)).get_points()
             poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, 0)).get_points())
-            drc_region += pya.Region(drc_poly.transformed(pya.Trans(x, 0)))
+            shapes(LayerExcludeN).insert(drc_poly.transformed(pya.Trans(x, 0)))
           else:
             poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, y)).get_points())
             poly.insert_hole(pya.Polygon(arc(r_h, 0, 360)).transformed(pya.Trans(x, -y)).get_points())
-            drc_region += pya.Region(drc_poly.transformed(pya.Trans(x, y)))
-            drc_region += pya.Region(drc_poly.transformed(pya.Trans(x, -y)))
+            shapes(LayerExcludeN).insert(drc_poly.transformed(pya.Trans(x, y)))
+            shapes(LayerExcludeN).insert(drc_poly.transformed(pya.Trans(x, -y)))
             
-    shapes(LayerExcludeN).insert(drc_region.each_merged().__next__())
-        
     shapes(LayerSiN).insert(poly)
     shapes(ly.layer(pya.LayerInfo(50, 0))).insert(mask_poly)
     
@@ -223,7 +155,7 @@ class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
                         pya.Point(a_p*sin(a_r)+10.0/dbu,-(a_p*cos(a_r) + g + 3.0/dbu))])
     shapes(LayerDevRecN).insert(poly)
     
-    if g &lt; 0.2/dbu:
+    if g < 0.2/dbu:
       poly = pya.Polygon([pya.Point(a_p*sin(a_r)+0.2/dbu,a_p*cos(a_r)-0.2/dbu),
                         pya.Point(a_p*sin(a_r)+0.2/dbu,a_p*cos(a_r)+g+0.2/dbu),
                         pya.Point(-(a_p*sin(a_r)+0.2/dbu),a_p*cos(a_r)+g+0.2/dbu),
@@ -309,13 +241,10 @@ class Sabarinathan(pya.Library):
     self.description = ""
 
     import os
-    self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC", "libraries", "Sabarinathan-GSiP.gds"))
+    self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "Sabarinathan-GSiP.gds"))
     [self.layout().rename_cell(i, self.layout().cell_name(i).replace('_', ' ')) for i in range(0, self.layout().cells())]
     
     self.layout().register_pcell("Photonic Crystal Hexagonal Ring Resonator", PC_Hex_Ring_Resonator_Edge())
     self.layout().register_pcell("Ridge to Strip Coupler", Ridge_Strip())
     
     self.register("Sabarinathan Lab Library")
-    
-Sabarinathan()</text>
-</klayout-macro>

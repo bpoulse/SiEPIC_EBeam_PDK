@@ -78,6 +78,13 @@ def registerMenuItems():
     _globals.ACTIONS[-1].title = "Snap Selected Component to Nearest Pins"
     menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])  
   
+  s3 = "delete_top_cells"
+  if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    _globals.ACTIONS.append(pya.Action())
+    _globals.ACTIONS[-1].on_triggered(scripts.delete_top_cells)
+    _globals.ACTIONS[-1].title = "Delete Extra Top Cells"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+  
   s2 = "exlayout"
   if not(menu.is_menu(s1 + "." + s2)):
     menu.insert_menu(s1 +".end", s2,"Example Layouts")
@@ -103,8 +110,8 @@ def registerMenuItems():
   s3 = "compute_area"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
     _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.compute_area)
-    _globals.ACTIONS[-1].title = "Compute Area of Selected Layer"
+    _globals.ACTIONS[-1].on_triggered(scripts.calculate_area)
+    _globals.ACTIONS[-1].title = "Compute Area of Silicon Layers"
     menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
     
   s3 = "calibreDRC"
